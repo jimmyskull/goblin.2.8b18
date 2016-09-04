@@ -1,0 +1,281 @@
+
+#-------------------------------------------------------------------------------
+# Module:     layoutArcs.tk
+# Activation: Dynamically loaded on user request
+# Scope:      Configuration of graph arc display
+#-------------------------------------------------------------------------------
+
+
+
+proc ShowADisplayOptions {} {
+    global goblinArrows goblinArcStyle goblinPredecessors goblinSubgraph \
+        goblinArcLabels1 goblinArcLabels2 goblinArcLabels3 goblinArcColours \
+        goblinArcFormatting WDArcDisplay DefPadX newArcFormatting
+
+    set title "Arc Display Options"
+    set updateOnly true
+
+    if {![RegisterFormOrWindow $title arcdisplay WDArcDisplay ShowADisplayOptions \
+            "Done"          {
+                goblin configure -arcFormatting $newArcFormatting
+                PropagateModifications
+            } \
+            "Apply"         {
+                goblin configure -arcFormatting $newArcFormatting
+                PropagateModifications
+            } \
+            ""              {} \
+            ""              {} \
+        ]
+    } {
+        set newArcFormatting $goblinArcFormatting
+        set updateOnly false
+
+        frame $WDArcDisplay.options
+        pack $WDArcDisplay.options -fill both -padx $DefPadX -pady 3m
+
+
+        label $WDArcDisplay.options.formatStringLabel -text "Label Format: " \
+            -anchor w
+        grid $WDArcDisplay.options.formatStringLabel \
+            -row 0 -column 0 -rowspan 1 -columnspan 1 -sticky news -padx 1m
+        entry $WDArcDisplay.options.formatStringString \
+            -textvariable newArcFormatting -bg white -width 20
+        grid $WDArcDisplay.options.formatStringString \
+            -row 0 -column 1 -rowspan 1 -columnspan 1 -sticky news -padx 1m
+
+
+        frame $WDArcDisplay.options.separator -height 3m
+        grid $WDArcDisplay.options.separator \
+            -row 1 -column 0 -rowspan 1 -columnspan 2 -sticky news -padx 1m
+
+
+        for {set i 1} {$i<=3} {incr i} {
+            label $WDArcDisplay.options.arcLabelLabel$i -text "Arc Labels %$i: " \
+                -anchor w
+            grid $WDArcDisplay.options.arcLabelLabel$i -sticky news -padx 1m \
+                -row [expr $i+1] -column 0 -rowspan 1 -columnspan 1
+
+            menubutton $WDArcDisplay.options.arcLabelSelect$i \
+                -menu $WDArcDisplay.options.arcLabelSelect$i.menu \
+                -anchor w -bg white -relief ridge -width 15
+            grid $WDArcDisplay.options.arcLabelSelect$i -sticky news -padx 1m \
+                -row [expr $i+1] -column 1 -rowspan 1 -columnspan 1
+
+            menu $WDArcDisplay.options.arcLabelSelect$i.menu -tearoff false
+        }
+
+
+        frame $WDArcDisplay.options.separator2 -height 3m
+        grid $WDArcDisplay.options.separator2 \
+            -row 5 -column 0 -rowspan 1 -columnspan 2 -sticky news -padx 1m
+
+
+        label $WDArcDisplay.options.subgraphLabel -text "Arc Display: " \
+            -anchor w
+        grid $WDArcDisplay.options.subgraphLabel -sticky news -padx 1m \
+            -row 6 -column 0 -rowspan 1 -columnspan 1
+
+        menubutton $WDArcDisplay.options.subgraphSelect \
+            -menu $WDArcDisplay.options.subgraphSelect.menu \
+            -anchor w -bg white -relief ridge -width 15
+        grid $WDArcDisplay.options.subgraphSelect -sticky news -padx 1m \
+            -row 6 -column 1 -rowspan 1 -columnspan 1
+
+        menu $WDArcDisplay.options.subgraphSelect.menu -tearoff false
+
+
+        label $WDArcDisplay.options.arcStyleLabel -text "Arc Style: " \
+            -anchor w
+        grid $WDArcDisplay.options.arcStyleLabel -sticky news -padx 1m \
+            -row 7 -column 0 -rowspan 1 -columnspan 1
+
+        menubutton $WDArcDisplay.options.arcStyleSelect \
+            -menu $WDArcDisplay.options.arcStyleSelect.menu \
+            -anchor w -bg white -relief ridge -width 15
+        grid $WDArcDisplay.options.arcStyleSelect -sticky news -padx 1m \
+            -row 7 -column 1 -rowspan 1 -columnspan 1
+
+        menu $WDArcDisplay.options.arcStyleSelect.menu -tearoff false
+
+
+        label $WDArcDisplay.options.arrowLabel2 -text "Show Arrows: " \
+            -anchor w
+        grid $WDArcDisplay.options.arrowLabel2 -sticky news -padx 1m \
+            -row 8 -column 0 -rowspan 1 -columnspan 1
+
+        menubutton $WDArcDisplay.options.arrowSelect \
+            -menu $WDArcDisplay.options.arrowSelect.menu \
+            -anchor w -bg white -relief ridge -width 15
+        grid $WDArcDisplay.options.arrowSelect -sticky news -padx 1m \
+            -row 8 -column 1 -rowspan 1 -columnspan 1
+
+        menu $WDArcDisplay.options.arrowSelect.menu -tearoff false
+
+
+        label $WDArcDisplay.options.arrowLabel -text "Place Arrows: " \
+            -anchor w
+        grid $WDArcDisplay.options.arrowLabel -sticky news -padx 1m \
+            -row 9 -column 0 -rowspan 1 -columnspan 1
+
+        menubutton $WDArcDisplay.options.arrowPlace \
+            -menu $WDArcDisplay.options.arrowPlace.menu \
+            -anchor w -bg white -relief ridge -width 15
+        grid $WDArcDisplay.options.arrowPlace -sticky news -padx 1m \
+            -row 9 -column 1 -rowspan 1 -columnspan 1
+
+        menu $WDArcDisplay.options.arrowPlace.menu -tearoff false
+
+
+        label $WDArcDisplay.options.colourLabel -text "Colour Display: " \
+            -anchor w
+        grid $WDArcDisplay.options.colourLabel -sticky news -padx 1m \
+            -row 10 -column 0 -rowspan 1 -columnspan 1
+
+        menubutton $WDArcDisplay.options.arcColour \
+            -menu $WDArcDisplay.options.arcColour.menu \
+            -anchor w -bg white -relief ridge -width 15
+        grid $WDArcDisplay.options.arcColour -sticky news -padx 1m \
+            -row 10 -column 1 -rowspan 1 -columnspan 1
+
+        menu $WDArcDisplay.options.arcColour.menu -tearoff false
+
+
+        grid columnconfig $WDArcDisplay.options 0 -weight 1 -minsize 0
+        grid columnconfig $WDArcDisplay.options 1 -weight 1 -minsize 0
+
+
+        frame $WDArcDisplay.checkButtons
+        pack $WDArcDisplay.checkButtons -fill both -padx $DefPadX -pady 5m
+
+        checkbutton $WDArcDisplay.checkButtons.predecessors \
+            -text "Show Predecessor Arcs" -variable goblinPredecessors -anchor w
+        pack $WDArcDisplay.checkButtons.predecessors -fill x
+
+
+        DisplayForm $title
+
+        focus $WDArcDisplay.options.formatStringString
+    }
+
+    foreach {i text} { \
+        0 "No Labels" \
+        1 "Indices {0,1,2,..}" \
+        7 "Indices {1,2,3,..}" \
+        2 "Upper Capacity Bounds" \
+        6 "Lower Capacity Bounds" \
+        4 "Length Labels" \
+        5 "Reduced Length Labels" \
+        3 "Subgraph Multiplicities" \
+        8 "Edge Colours" \
+    } {
+        if {!$updateOnly} {
+            for {set j 1} {$j<=3} {incr j} {
+                $WDArcDisplay.options.arcLabelSelect$j.menu add command \
+                    -label "#$i $text" \
+                    -command "set goblinArcLabels$j $i; $WDArcDisplay.options.arcLabelSelect$j configure -text \"$text\""
+            }
+        }
+
+        if {$goblinArcLabels1 == $i} {
+            $WDArcDisplay.options.arcLabelSelect1 configure -text "$text"
+        }
+        if {$goblinArcLabels2 == $i} {
+            $WDArcDisplay.options.arcLabelSelect2 configure -text "$text"
+        }
+        if {$goblinArcLabels3 == $i} {
+            $WDArcDisplay.options.arcLabelSelect3 configure -text "$text"
+        }
+    }
+
+    foreach {i text} { \
+        0 "Hide All Arcs" \
+        4 "Uniform" \
+        1 "Supported Arcs Only" \
+        2 "Fractional Arcs Dashed" \
+        3 "Empty / Free / Full Arcs" \
+        5 "Ordinal Styles" \
+    } {
+        if {!$updateOnly} {
+            $WDArcDisplay.options.subgraphSelect.menu add command \
+                -label "$text" \
+                -command "set goblinSubgraph $i; $WDArcDisplay.options.subgraphSelect configure -text \"$text\""
+        }
+
+        if {$goblinSubgraph == $i} {
+            $WDArcDisplay.options.subgraphSelect configure -text "$text"
+        }
+    }
+
+    foreach {i text} { \
+        0 "Polygones" \
+        1 "Splines" \
+        2 "Rectilinear" \
+    } {
+        if {!$updateOnly} {
+            $WDArcDisplay.options.arcStyleSelect.menu add command \
+                -label "$text" \
+                -command "set goblinArcStyle $i; $WDArcDisplay.options.arcStyleSelect configure -text \"$text\""
+        }
+
+        if {$goblinArcStyle == $i} {
+            $WDArcDisplay.options.arcStyleSelect configure -text "$text"
+        }
+    }
+
+    foreach {i text} { \
+        0 "Aligned With Nodes" \
+        1 "Centered in Segments" \
+    } {
+        if {!$updateOnly} {
+            $WDArcDisplay.options.arrowPlace.menu add command \
+                -label "$text" \
+                -command "UpdateArrowOptions 252 $i; $WDArcDisplay.options.arrowPlace configure -text \"$text\""
+        }
+
+        if {[expr $goblinArrows & 1] == $i} {
+            $WDArcDisplay.options.arrowPlace configure -text "$text"
+        }
+    }
+
+    foreach {i text} { \
+        0  "Directed Arcs Only" \
+        4  "No Arrows At All" \
+        8  "All Arcs With Arrows" \
+        12 "In Direction Of Flow" \
+    } {
+        if {!$updateOnly} {
+            $WDArcDisplay.options.arrowSelect.menu add command \
+                -label "$text" \
+                -command "UpdateArrowOptions 1 $i; $WDArcDisplay.options.arrowSelect configure -text \"$text\""
+        }
+
+        if {[expr $goblinArrows & 252] == $i} {
+            $WDArcDisplay.options.arrowSelect configure -text "$text"
+        }
+    }
+
+    foreach {i text} { \
+        0 "Disabled" \
+        1 "Fixed Table" \
+        2 "Repeating" \
+        3 "Floating" \
+    } {
+        if {!$updateOnly} {
+            $WDArcDisplay.options.arcColour.menu add command \
+                -label "$text" \
+                -command "set goblinArcColours $i; $WDArcDisplay.options.arcColour configure -text \"$text\""
+        }
+
+        if {$goblinArcColours == $i} {
+            $WDArcDisplay.options.arcColour configure -text "$text"
+        }
+    }
+}
+
+proc UpdateArrowOptions {mask value} {
+    global goblinArrows
+    set goblinArrows [expr ($goblinArrows & $mask) | $value]
+}
+
+ShowADisplayOptions

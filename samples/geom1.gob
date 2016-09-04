@@ -1,0 +1,62 @@
+(dense_graph
+ (definition
+  (nodes 20 20 0)
+  (ucap 1.000)
+  (lcap 0.000)
+  (demand 2.000)
+  (directed 0)
+ )
+ (objectives
+  (commodities 1)
+  (bound *)
+  (length
+   (comm0 1.000)
+  )
+ )
+ (geometry
+  (metrics 2)
+  (dim 2)
+  (coordinates
+   (axis0
+      0.000 16.000 46.000 31.000  4.000 30.000 36.000 17.000 12.000 41.000
+     22.000  2.000 48.000  8.000  6.000  2.000 48.000 13.000 48.000 47.000)
+   (axis1
+      1.000  0.000  3.000 45.000 12.000  0.000 34.000 38.000 18.000 39.000
+      4.000 28.000 24.000 26.000  7.000 14.000 33.000 27.000  7.000 16.000)
+  )
+ )
+ (layout
+  (style 1)
+  (align *)
+  (interpolate *)
+ )
+ (solutions
+  (label
+             *          *          *          *          *          *          *          *          *          *
+             *          *          *          *          *          *          *          *          *          *)
+  (predecessor
+      2 112 346  62 218  35  49 320 256 103
+    121 149 296 205 211 249 291 333 416 405)
+  (subgraph 0.000)
+  (potential *)
+  (colour *)
+ )
+ (configure
+   -source             200000
+   -target             200000
+   -root               200000
+   -xShift             400
+   -yShift             400
+   -xZoom              1.20e+02
+   -yZoom              1.20e+02
+   -legenda            0
+   -arcLabels          4
+   -nodeColours        0
+   -subgraph           1
+   -displayMode        3
+   -traceLevel         3
+   -logMeth            2
+   -methMinCut         2
+   -methTSP            3
+   -methSolve          0)
+)

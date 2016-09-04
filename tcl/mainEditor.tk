@@ -1,0 +1,1201 @@
+
+#-------------------------------------------------------------------------------
+# Module:     mainEditor.tk
+# Activation: Loaded during GOBLET startup
+# Scope:      Generation of the editor canvas
+#             All editor functions
+#             Conversions between library and editor object
+#-------------------------------------------------------------------------------
+
+
+
+# Conversions of Canvas Coordinates and Goblin Coordinates
+
+proc CanvasCX {cx} {
+    global goblinXShift goblinXZoom Zoom
+
+    return [expr {$cx*$goblinXZoom*$Zoom+$goblinXShift*$Zoom}];
+}
+
+proc CanvasCY {cy} {
+    global goblinYShift goblinYZoom Zoom
+
+    return [expr {$cy*$goblinYZoom*$Zoom+$goblinYShift*$Zoom}];
+}
+
+proc GoblinCX {cx gridSize} {
+    global goblinXShift goblinXZoom Zoom
+
+    if {$gridSize==0} {
+        return [expr {($cx-$goblinXShift*$Zoom)/($goblinXZoom+0.0000000001)/$Zoom}]
+    }
+
+    return [expr {round(($cx-$goblinXShift*$Zoom)/($goblinXZoom+0.0000000001)/$Zoom/$gridSize)*$gridSize}]
+}
+
+proc GoblinCY {cy gridSize} {
+    global goblinYShift goblinYZoom Zoom
+
+    if {$gridSize==0} {
+        return [expr {($cy-$goblinYShift*$Zoom)/($goblinYZoom+0.0000000001)/$Zoom}]
+    }
+
+    return [expr {round(($cy-$goblinYShift*$Zoom)/($goblinYZoom+0.0000000001)/$Zoom/$gridSize)*$gridSize}]
+}
+
+proc GridCX {cx gridSize} {
+    return [CanvasCX [GoblinCX $cx $gridSize]];
+}
+
+proc GridCY {cy gridSize} {
+    return [CanvasCY [GoblinCY $cy $gridSize]];
+}
+
+proc CurrentCX {cx gridSize} {
+    global xscroll c goblinFineSep
+
+    return [GridCX [$c canvasx $cx] $gridSize]
+}
+
+proc CurrentCY {cy gridSize} {
+    global yscroll c goblinFineSep
+
+    return [GridCY [$c canvasy $cy] $gridSize]
+}
+
+
+
+# Placement of Canvas Nodes
+
+proc DrawNode {v nodeType cx cy fillColour} {
+    global c IncIn IncOut NodeIndex RevNodeIndex goblinNodeSize goblinBendSep \
+        Zoom goblinXZoom goblinYZoom goblinNodeStyle ThisGraph
+
+    set shape oval
+
+    if {[string equal $nodeType "real"]} {
+        if {$goblinNodeStyle==0} {
+            set ratio 8
+        } else {
+            set ratio [expr {
+                ($goblinXZoom+$goblinYZoom)/2*$goblinNodeSize/100.0*$Zoom*$goblinBendSep/5.0}]
+        }
+
+        set xRatio $ratio
+        set yRatio $ratio
+
+        if {$goblinNodeStyle==2} {
+            set shape rectangle
+        }
+
+        if {$goblinNodeStyle>0} {
+            set w [$ThisGraph node $v thread]
+
+            if {$w!="*"} {
+                set xRatio [expr $ratio + [$ThisGraph node $w cx]*$goblinXZoom*$Zoom];
+                set yRatio [expr $ratio + [$ThisGraph node $w cy]*$goblinYZoom*$Zoom];
+            }
+        }
+    } else {
+        set ratio 4
+        set xRatio $ratio
+        set yRatio $ratio
+    }
+
+    set node [$c create $shape \
+        [expr {$cx-$xRatio}] [expr {$cy-$yRatio}] \
+        [expr {$cx+$xRatio}] [expr {$cy+$yRatio}] \
+        -outline black -fill $fillColour -tags node]
+
+    set IncIn($v) {}
+    set IncOut($v) {}
+    set NodeIndex($node) $v
+    set RevNodeIndex($v) $node
+}
+
+
+proc RedrawNode {v nodeType} {
+    global c IncIn IncOut NodeIndex RevNodeIndex goblinNodeSize goblinBendSep \
+        Zoom goblinXZoom goblinYZoom ThisGraph goblinNodeStyle
+
+    if {[string equal $nodeType "real"]} {
+        if {$goblinNodeStyle==0} {
+            set ratio 8
+        } else {
+            set ratio [expr {
+                ($goblinXZoom+$goblinYZoom)/2*$goblinNodeSize/100.0*$Zoom*$goblinBendSep/5.0}]
+        }
+
+        set xRatio $ratio
+        set yRatio $ratio
+
+        if {$goblinNodeStyle>0} {
+            set w [$ThisGraph node $v thread]
+
+            if {$w!="*"} {
+                set xRatio [expr $ratio + [$ThisGraph node $w cx]*$goblinXZoom*$Zoom];
+                set yRatio [expr $ratio + [$ThisGraph node $w cy]*$goblinYZoom*$Zoom];
+            }
+        }
+    } else {
+        set ratio 4
+        set xRatio $ratio
+        set yRatio $ratio
+    }
+
+    set Node $RevNodeIndex($v)
+    $c coords $Node \
+        [expr {[CanvasCX [$ThisGraph node $v cx]]-$xRatio}] \
+        [expr {[CanvasCY [$ThisGraph node $v cy]]-$yRatio}] \
+        [expr {[CanvasCX [$ThisGraph node $v cx]]+$xRatio}] \
+        [expr {[CanvasCY [$ThisGraph node $v cy]]+$yRatio}]
+}
+
+
+proc DropNode {v cx cy gridSize} {
+    global ThisGraph c
+
+    set x0 [GoblinCX $cx $gridSize]
+    set y0 [GoblinCY $cy $gridSize]
+
+    if {($x0<0)} {
+        for {set u 0} {$u<[expr {[$ThisGraph #nodes]+[$ThisGraph #artificial]}]} {incr u} {
+            $ThisGraph node $u set cx [expr {[$ThisGraph node $u cx]-$x0}]
+        }
+        $ThisGraph node $v set cx 0
+    } else {$ThisGraph node $v set cx $x0}
+
+    if {($y0<0)} {
+        for {set u 0} {$u<[expr {[$ThisGraph #nodes]+[$ThisGraph #artificial]}]} {incr u} {
+            $ThisGraph node $u set cy [expr {[$ThisGraph node $u cy]-$y0}]
+        }
+        $ThisGraph node $v set cy 0
+    } else {$ThisGraph node $v set cy $y0}
+
+    RedrawGraph
+}
+
+
+# Placement of Canvas Arcs
+
+proc DrawArc {a fillColour} {
+    global ThisGraph c IncIn IncOut Mode \
+        ArcIndex RevArcIndex HandleIndex RevHandleIndex thisCoords
+
+    set u [$ThisGraph arc [expr {2*$a}] tail]
+    set v [$ThisGraph arc [expr {2*$a}] head]
+    set w [$ThisGraph arc [expr {2*$a}] align]
+
+    if {$u==$v && [string equal $w "*"]} {return}
+
+    # Draw Handle
+
+    if {[string equal $w "*"]} {
+        set cx [expr {([$ThisGraph node $u cx]+[$ThisGraph node $v cx])/2}]
+        set cy [expr {([$ThisGraph node $u cy]+[$ThisGraph node $v cy])/2}]
+    } else {
+        set cx [$ThisGraph node $w cx]
+        set cy [$ThisGraph node $w cy]
+    }
+
+    set handle [$c create rectangle \
+        [expr {[CanvasCX $cx]-4}] [expr {[CanvasCY $cy]-4}] \
+        [expr {[CanvasCX $cx]+4}] [expr {[CanvasCY $cy]+4}] \
+        -outline black -fill black -tags handle]
+
+
+    # Compute Canvas Coordinates
+
+    if {$w!="*"} {set w [$ThisGraph node $w thread]}
+
+    set thisCoords [list \
+        [CanvasCX [$ThisGraph node $u cx]] \
+        [CanvasCY [$ThisGraph node $u cy]]]
+
+    while {$w!="*"} {
+        DrawNode $w artifical \
+            [CanvasCX [$ThisGraph node $w cx]] \
+            [CanvasCY [$ThisGraph node $w cy]] \
+            [NodeColour $v]
+        lappend thisCoords \
+            [CanvasCX [$ThisGraph node $w cx]] \
+            [CanvasCY [$ThisGraph node $w cy]]
+        set w [$ThisGraph node $w thread]
+    }
+
+    lappend thisCoords \
+        [CanvasCX [$ThisGraph node $v cx]] \
+        [CanvasCY [$ThisGraph node $v cy]]
+
+
+    # Draw Arc
+
+    global goblinArcStyle
+    set lineCommand "$c create line $thisCoords"
+    set widthOption "-width 2"
+    set smoothOption ""
+    if {$goblinArcStyle == 1} {set smoothOption "-smooth on"}
+    set dirOption ""
+    if {[$ThisGraph arc [expr {2*$a}] orientation]} {set dirOption "-arrow last"}
+
+    # Handle predecessor arcs
+
+    set fillOption "-fill $fillColour"
+    if {[string equal $Mode "set predecessors"]} {
+        if {[$ThisGraph node $v predecessor]==[expr 2*$a]} {
+            set widthOption "-width 5"
+            set fillOption "-fill [goblin colour predecessors]"
+
+            if {[$ThisGraph node $u predecessor]==[expr 2*$a+1]} {
+                set dirOption "-arrow both"
+            } else {
+                set dirOption "-arrow last"
+            }
+        } else {
+            if {[$ThisGraph node $u predecessor]==[expr 2*$a+1]} {
+                set widthOption "-width 5"
+                set fillOption "-fill [goblin colour predecessors]"
+                set dirOption "-arrow first"
+            }
+        }
+    }
+
+    global goblinArrowSize Zoom goblinXZoom goblinYZoom goblinBendSep goblinNodeSep
+    set arrowSize [expr {($goblinXZoom+$goblinYZoom)/2*$goblinArrowSize/100.0*$Zoom}]
+    if {[expr {$goblinBendSep/2.0}] < [expr {$goblinNodeSep/10.0}]} {
+        set arrowSize [expr {$arrowSize*$goblinBendSep/2.0}]
+    } else {
+        set arrowSize [expr {$arrowSize*$goblinNodeSep/10.0}]
+    }
+
+    set arrowShape "-arrowshape {[expr $arrowSize*2] [expr $arrowSize*3] $arrowSize}"
+
+    set Arc [eval $lineCommand $widthOption $smoothOption $fillOption $dirOption $arrowShape]
+
+    # Set Indices
+
+    $c lower $Arc
+    lappend IncIn($v) $Arc
+    lappend IncOut($u) $Arc
+    set ArcIndex($Arc) $a
+    set RevArcIndex($a) $Arc
+
+    set RevHandleIndex($handle) $a
+    set HandleIndex($a) $handle
+}
+
+proc RedrawArc {a} {
+    global ThisGraph c RevArcIndex HandleIndex thisCoords
+
+    set u [$ThisGraph arc [expr {2*$a}] tail]
+    set v [$ThisGraph arc [expr {2*$a}] head]
+    set w [$ThisGraph arc [expr {2*$a}] align]
+
+    if {$u==$v && [string equal $w "*"]} {return}
+
+
+    # Draw Handle
+
+    if {[string equal $w "*"]} {
+        set cx [expr {([$ThisGraph node $u cx]+[$ThisGraph node $v cx])/2}]
+        set cy [expr {([$ThisGraph node $u cy]+[$ThisGraph node $v cy])/2}]
+    } else {
+        set cx [$ThisGraph node $w cx]
+        set cy [$ThisGraph node $w cy]
+    }
+
+    $c coords $HandleIndex($a) \
+        [expr {[CanvasCX $cx]-4}] [expr {[CanvasCY $cy]-4}] \
+        [expr {[CanvasCX $cx]+4}] [expr {[CanvasCY $cy]+4}]
+
+
+    # Compute Canvas Coordinates
+
+    if {$w!="*"} {set w [$ThisGraph node $w thread]}
+
+    set thisCoords [list \
+        [CanvasCX [$ThisGraph node $u cx]] \
+        [CanvasCY [$ThisGraph node $u cy]]]
+
+    while {$w!="*"} {
+        RedrawNode $w artifical
+        lappend thisCoords \
+            [CanvasCX [$ThisGraph node $w cx]] \
+            [CanvasCY [$ThisGraph node $w cy]]
+        set w [$ThisGraph node $w thread]
+    }
+
+    lappend thisCoords \
+        [CanvasCX [$ThisGraph node $v cx]] \
+        [CanvasCY [$ThisGraph node $v cy]]
+
+
+    # Draw Arc
+
+    eval $c coords $RevArcIndex($a) $thisCoords
+    if {[$ThisGraph arc [expr {2*$a}] orientation]} {
+        $c itemconfigure $RevArcIndex($a) -arrow last
+    } else {
+        $c itemconfigure $RevArcIndex($a) -arrow none
+    }
+}
+
+
+# Initialize Canvas with Graph in GOBLIN Library
+
+proc NodeColour {v} {
+    global ThisGraph Mode
+
+    if {[string equal $Mode "set colours"]} {
+        return [goblin colour [$ThisGraph node $v colour]]
+    }
+
+    if {[$ThisGraph is bipartite] && $v<[$ThisGraph #outer]} {
+        return sienna
+    } else {
+        return peru
+    }
+}
+
+proc EdgeColour {a} {
+    global ThisGraph Mode
+
+    if {[string equal $Mode "set colours"]} {
+        set thisColour [$ThisGraph arc [expr 2*$a] colour]
+        if {$thisColour=="*"} {
+            # Prevent from drawing white edges
+            return [goblin colour maximum]
+        } else {
+            return [goblin colour $thisColour]
+        }
+    }
+
+    return black
+}
+
+proc RGBColour {rSat gSat bSat} {
+    return [format "#%X%X%X" $rSat $gSat $bSat];
+}
+
+proc HighlightIncidences {v} {
+    global ThisGraph c RevArcIndex ThisNode
+
+    for {set a 0} {$a<[$ThisGraph #arcs]} {incr a} {
+        $c itemconfigure $RevArcIndex($a) -fill black -width 2
+    }
+
+    set aFirst [$ThisGraph node $v first]
+
+    if {$aFirst=="*"} {break}
+
+    set a $aFirst
+    set aNext [$ThisGraph arc $a right]
+    set incList [list]
+    set lLength 1
+
+    while {$aNext!=$aFirst} {
+        lappend incList $a
+        set a $aNext
+        set aNext [$ThisGraph arc $aNext right]
+        incr lLength
+    }
+    lappend incList $a
+
+    set i 1
+    foreach a $incList {
+        $c itemconfigure $RevArcIndex([expr $a/2]) -fill \
+            [RGBColour \
+                [expr 16+round(239.0*($lLength-$i+1)/$lLength)] \
+                16 [expr 16+round(239.0*$i/$lLength)] ]
+        incr i
+    }
+}
+
+proc DrawGraph {} {
+    global ThisGraph c goblinWallpaper
+
+    for {set v 0} {$v<[$ThisGraph #nodes]} {incr v} {
+        DrawNode $v real \
+            [CanvasCX [$ThisGraph node $v cx]] \
+            [CanvasCY [$ThisGraph node $v cy]] \
+            [NodeColour $v]
+    }
+
+    if {[$ThisGraph is sparse]} {
+        for {set a 0} {$a<[$ThisGraph #arcs]} {incr a} {
+            DrawArc $a [EdgeColour $a]
+        }
+    } else {
+        for {set v 0} {$v<[$ThisGraph #nodes]} {incr v} {
+            set thisPred [$ThisGraph node $v predecessor]
+            if {$thisPred!="*"} {
+                DrawArc [expr $thisPred/2] [EdgeColour [expr $thisPred/2]]
+            }
+        }
+    }
+
+    if {$goblinWallpaper!=""} {
+        image create photo wallpaper -file "$goblinWallpaper"
+        $c lower [$c create image 0 0 -image wallpaper -anchor nw]
+    }
+
+    BackupScrollPos
+}
+
+proc RedrawGraph {} {
+    global ThisGraph c CanvasMargin
+
+    for {set v 0} {$v<[$ThisGraph #nodes]} {incr v} {RedrawNode $v real}
+
+    if {[$ThisGraph is sparse]} {
+        for {set a 0} {$a<[$ThisGraph #arcs]} {incr a} {RedrawArc $a}
+    } else {
+        for {set v 0} {$v<[$ThisGraph #nodes]} {incr v} {
+            set thisPred [$ThisGraph node $v predecessor]
+            if {$thisPred!="*"} {RedrawArc [expr $thisPred/2]}
+        }
+    }
+
+    $c configure -scrollregion [list \
+        [expr [lindex [$c bbox all] 0]-$CanvasMargin] \
+        [expr [lindex [$c bbox all] 1]-$CanvasMargin] \
+        [expr [lindex [$c bbox all] 2]+$CanvasMargin] \
+        [expr [lindex [$c bbox all] 3]+$CanvasMargin] ]
+}
+
+
+
+# Editor Event Bindings
+
+proc MakeBalloonEdit {label cx cy} {
+    global ThisGraph c
+    destroy .balloon
+    toplevel .balloon
+    append wdSize 100x20+ \
+        [expr [winfo rootx $c]+$cx+15] + \
+        [expr [winfo rooty $c]+$cy+20]
+    wm geometry .balloon $wdSize
+    label .balloon.text -text $label -bg yellow -relief solid -anchor w
+    pack .balloon.text -fill both
+
+    set wdSize ""
+    append wdSize [winfo reqwidth .balloon.text] x \
+        [winfo reqheight .balloon.text] + \
+        [expr [winfo rootx $c]+$cx+15]  + \
+        [expr [winfo rooty $c]+$cy+20]
+    wm geometry .balloon $wdSize
+    wm overrideredirect .balloon 1
+}
+
+proc InitEditor {} {
+    global currentNode currentArc c Mode StartNode EndNode ThisArcIndex \
+        MoveNode MoveArc ThisArcIndex2
+
+    InitCanvasRegion
+    MakeEditorBar
+
+    set currentNode ""
+    set currentArc ""
+    set ThisNode ""
+    set ThisArcIndex ""
+    set ThisArcIndex2 ""
+    set StartNode ""
+    set EndNode ""
+    set MoveNode ""
+    set MoveArc ""
+
+    PostStatusInfo ""
+
+
+    $c bind node <Any-Enter> {
+        set thisObj [$c find withtag current]
+        $c itemconfigure current -width 3 -outline ivory3
+        set currentNode $NodeIndex($thisObj)
+        MakeBalloonEdit "node index $currentNode" %x %y
+    }
+
+    $c bind handle <Any-Enter> {
+        set thisObj [$c find withtag current]
+        $c itemconfigure current -fill grey -width 3 -outline ivory3
+        set currentArc $RevHandleIndex($thisObj)
+        MakeBalloonEdit "arc index $currentArc" %x %y
+    }
+
+    $c bind node <Any-Leave> {
+        set thisObj [$c find withtag current]
+        $c itemconfigure current -width 1 -outline black
+        set currentNode ""
+        DestroyBalloon
+    }
+
+    $c bind handle <Any-Leave> {
+        set thisObj [$c find withtag current]
+        $c itemconfigure current -fill black -width 1 -outline black
+        set currentArc ""
+        DestroyBalloon
+    }
+
+    bind $c <Button-1> {
+        if {[string equal $Mode "move nodes"]} {
+            if {$currentNode!=""} {
+                if {$currentNode<[$ThisGraph #nodes]} {
+                    UploadNodeLabels
+                    DownloadNodeLabels $currentNode
+                }
+
+                set MoveNode $currentNode
+            }
+
+            if {$currentArc!=""} {
+                if {[$ThisGraph arc [expr {2*$currentArc}] align]=="*"} {
+                    $ThisGraph arc [expr {2*$currentArc}] set align \
+                        [GoblinCX %x $goblinFineSep] [GoblinCY %y $goblinFineSep]
+                }
+
+                UploadArcLabels
+                DownloadArcLabels $currentArc
+                set MoveArc $currentArc
+            }
+        }
+
+        if {[string equal $Mode "change labels"]} {
+            if {$currentNode!="" && $currentNode<[$ThisGraph #nodes]} {
+                UploadNodeLabels
+                DownloadNodeLabels $currentNode
+                source [file join $GoblinTclPath editNodeLabels.tk]}
+            if {$currentArc!=""} {
+                UploadArcLabels
+                DownloadArcLabels $currentArc
+
+                source [file join $GoblinTclPath editArcLabels.tk]}
+        }
+
+        if {[string equal $Mode "redirect arcs"]} {
+            if {$currentArc!=""} {
+                $ThisGraph arc [expr {2*$currentArc}] flip
+                RedrawArc $currentArc
+                UploadArcLabels
+                DownloadArcLabels $currentArc
+                PropagateModifications
+            }
+        }
+
+        if {[string equal $Mode "sort incidences"]} {
+            if {$currentNode!="" && $currentNode<[$ThisGraph #nodes]} {
+                if {$ThisNode!=$currentNode || $ThisArcIndex==""} {
+                    set ThisArcIndex [$ThisGraph node $currentNode first]
+                    UploadAndDownloadLabels $currentNode [expr $ThisArcIndex/2]
+                    HighlightIncidences $ThisNode
+                } else {
+                    $c itemconfigure $RevArcIndex([expr $ThisArcIndex/2]) -width 2
+                    set ThisArcIndex [$ThisGraph arc $ThisArcIndex right]
+                    UploadAndDownloadLabels $ThisNode [expr $ThisArcIndex/2]
+                }
+
+                MakeHelp "(L) scan/select node  (R) select incidence"
+                $c itemconfigure $RevArcIndex([expr $ThisArcIndex/2]) -width 5
+            }
+        }
+
+        if {[string equal $Mode "shift incidence"]} {
+            $ThisGraph node $ThisNode set first $ThisArcIndex
+            set Mode "sort incidences"
+            MakeHelp "(L) scan/select node  (R) select incidence"
+            HighlightIncidences $ThisNode
+            PropagateModifications
+            break
+        }
+
+        if {[string equal $Mode "paste incidence"]} {
+            $c itemconfigure $RevArcIndex([expr $ThisArcIndex/2]) -width 2
+            set ThisArcIndex [$ThisGraph arc $ThisArcIndex right]
+            $c itemconfigure $RevArcIndex([expr $ThisArcIndex/2]) -width 5
+            break
+        }
+
+        if {[string equal $Mode "insert nodes"]} {
+            if {$currentNode == ""} {
+                set w [expr [$ThisGraph #nodes]+[$ThisGraph #artificial]]
+                set v [$ThisGraph #nodes]
+
+                # This uses implementational details about index changes!
+                if {$w!=$v && [info exists RevNodeIndex($v)]} {
+                    # w is a bend node
+                    set RevNodeIndex($w) $RevNodeIndex($v)
+                    set NodeIndex($RevNodeIndex($w)) $w
+                } else {
+                    # w is an edge label alignment point
+                    # or no artificial nodes exist at all
+                    set RevNodeIndex($w) ""
+                }
+
+                $ThisGraph node insert
+                PropagateModifications
+
+                DrawNode $v real [CurrentCX %x $goblinNodeSep] \
+                    [CurrentCY %y $goblinNodeSep] [NodeColour $v]
+                DropNode $v [CurrentCX %x $goblinNodeSep] \
+                    [CurrentCY %y $goblinNodeSep] $goblinNodeSep
+
+                # Allow to drop the new node elsewhere
+                UploadNodeLabels
+                DownloadNodeLabels $v
+                set MoveNode $v
+            }
+        }
+
+        if {[string equal $Mode "set colours"]} {
+            if {$currentNode != "" && $currentNode<[$ThisGraph #nodes]} {
+                set newColour [$ThisGraph node $currentNode colour]
+
+                if {$newColour!="*" && $newColour!=0} {
+                    incr newColour -1
+                } else {
+                    if {$newColour=="*"} {
+                        set newColour [expr [$ThisGraph #nodes]-1]
+                    } else {
+                        set newColour "*"
+                    }
+                }
+
+                $c itemconfigure current -fill [goblin colour $newColour]
+                UploadNodeLabels
+                $ThisGraph node $currentNode set colour $newColour
+                DownloadNodeLabels $currentNode
+                PropagateModifications
+            }
+
+            if {$currentArc != ""} {
+                set newColour [$ThisGraph arc [expr {2*$currentArc}] colour]
+
+                if {$newColour=="*" || $newColour!=0} {
+                    if {$newColour=="*"} {
+                        set newColour [expr [$ThisGraph #arcs]-1]
+                    } else {
+                        incr newColour -1
+                    }
+                    $c itemconfigure $RevArcIndex($currentArc) \
+                        -fill [goblin colour $newColour]
+                } else {
+                    set newColour "*"
+                    $c itemconfigure $RevArcIndex($currentArc) -fill black
+                }
+
+                UploadArcLabels
+                $ThisGraph arc [expr {2*$currentArc}] set colour $newColour
+                DownloadArcLabels $currentArc
+                PropagateModifications
+            }
+        }
+
+        if {[string equal $Mode "set predecessors"]} {
+            if {$EndNode == ""} {
+                if {$currentNode != "" && $currentNode<[$ThisGraph #nodes]} {
+                    UploadNodeLabels
+                    set EndNode $currentNode
+                    DownloadNodeLabels $currentNode
+
+                    MakeHelp "(L) set predecessor node/arc  (C) dismiss"
+                }
+            } else {
+                set thisPred ""
+                if {$currentNode!="" && $currentNode<[$ThisGraph #nodes]} {
+                    set StartNode $currentNode
+                    set thisPred [$ThisGraph adjacency $StartNode $EndNode]
+                }
+
+                if {$currentArc!=""} {
+                    set thisPred [expr 2*$currentArc]
+                    if {[$ThisGraph arc $thisPred head]!=$EndNode} {
+                        incr thisPred
+                    }
+                    set StartNode [$ThisGraph arc $thisPred tail]
+                }
+
+                if {$thisPred!="" && [$ThisGraph arc $thisPred head]==$EndNode} {
+                    UploadNodeLabels
+                    UploadArcLabels
+                    $ThisGraph node $EndNode set predecessor $thisPred
+                    DownloadNodeLabels $EndNode
+                    DownloadArcLabels [expr $thisPred/2]
+                    PropagateModifications
+                    set EndNode ""
+                    MakeHelp "(L) select node"
+                    InitEditor
+                }
+            }
+        }
+
+        if {[string equal $Mode "insert arcs"]} {
+            if {$StartNode == ""} {
+                if {$currentNode != "" && $currentNode<[$ThisGraph #nodes]} {
+                    set StartNode $currentNode
+                    set EndNode ""
+
+                    set ThisCoords [list \
+                        [CanvasCX [$ThisGraph node $StartNode cx]] \
+                        [CanvasCY [$ThisGraph node $StartNode cy]] \
+                        [CurrentCX %x $goblinNodeSep] \
+                        [CurrentCY %y $goblinNodeSep] ]
+
+                    set smoothOption ""
+                    if {$goblinArcStyle == 1} {set smoothOption "-smooth on"}
+                    set ThisArcIndex2 [eval $c create line $ThisCoords $smoothOption]
+                    $c lower $ThisArcIndex2
+
+                    MakeHelp "(L) select end node / place bend  (C) cancel"
+                }
+            } else {
+                set EndNode $currentNode
+
+                if {$currentNode != "" && $currentNode<[$ThisGraph #nodes]} {
+                    set u $StartNode
+                    set v $currentNode
+                    $c delete $ThisArcIndex2
+                    set ThisArcIndex2 ""
+
+                    if {[$ThisGraph is bipartite] && \
+                        (($u<[$ThisGraph #outer] && $v<[$ThisGraph #outer]) || \
+                         ($u>=[$ThisGraph #outer] && $v>=[$ThisGraph #outer])) } \
+                    {
+                        PostStatusInfo "end nodes must be in different components"
+                        set StartNode ""
+                        break
+                    }
+
+                    set a [$ThisGraph arc insert $u $v]
+                    set thisLength [llength $ThisCoords]
+
+                    if {$thisLength>4} {
+                        set goblinCoords ""
+                        for {set i 0} {$i < $thisLength} {incr i 2} {
+                            lappend goblinCoords \
+                                [GoblinCX [lindex $ThisCoords $i] $goblinBendSep] \
+                                [GoblinCY [lindex $ThisCoords [expr $i+1]] $goblinBendSep]
+                        }
+
+                        set w [$ThisGraph arc [expr {2*$a}] set align \
+                            [GoblinCX [$c canvasx %x] $goblinFineSep] \
+                            [GoblinCY [$c canvasy %y] $goblinFineSep] ]
+                        eval $ThisGraph node $w set thread \
+                            [lrange $goblinCoords 2 [expr {$thisLength-3}]]
+
+                        set LabelNode [$ThisGraph arc [expr {2*$a}] align]
+                        MakeHelp "(L) align label"
+                    } else {
+                        set LabelNode ""
+                        MakeHelp "(L) align label  (R) automatic alignment"
+                    }
+
+                    DrawArc $a [EdgeColour $a]
+
+                    if {[info exists HandleIndex($a)]} {
+                        UploadArcLabels
+                        DownloadArcLabels $a
+                        set NewArc $a
+                        set Mode "align label"
+
+                        PropagateModifications
+                        set StartNode ""
+                    } else {
+                        MakeHelp "Missing interpolation points"
+                        set StartNode ""
+                    }
+                } else {
+                    lappend ThisCoords [CurrentCX %x $goblinBendSep] [CurrentCY %y $goblinBendSep]
+                    eval $c coords $ThisArcIndex2 $ThisCoords
+                }
+            }
+        }
+
+        if {[string equal $Mode "align label"] && $currentNode == ""} {
+            if {$LabelNode == ""} {
+                $ThisGraph arc [expr {2*$ThisArc}] set align \
+                    [GoblinCX %x $goblinFineSep] [GoblinCY %y $goblinFineSep]
+            } else {
+                $ThisGraph node $LabelNode set cx \
+                    [GoblinCX [$c canvasx %x] $goblinFineSep]
+                $ThisGraph node $LabelNode set cy \
+                    [GoblinCY [$c canvasy %y] $goblinFineSep]
+            }
+
+            set Mode "insert arcs"
+            MakeHelp "(L) select start node  (R) add bend nodes"
+        }
+
+        if {[string equal $Mode "add bend nodes"]} {
+            if {$currentNode!=""} {
+                if {$StartNode == ""} {
+                    set StartNode $currentNode
+                    set EndNode ""
+
+                    set ThisCoords [list \
+                        [CanvasCX [$ThisGraph node $StartNode cx]] \
+                        [CanvasCY [$ThisGraph node $StartNode cy]] \
+                        [CurrentCX %x $goblinBendSep] [CurrentCY %y $goblinBendSep] ]
+
+                    set smoothOption ""
+                    if {$goblinArcStyle == 1} {set smoothOption "-smooth on"}
+                    set ThisArcIndex2 [eval $c create line $ThisCoords $smoothOption]
+                    $c lower $ThisArcIndex2
+
+                    MakeHelp "(L) place bend node / select segment end node"
+                    break
+                }
+
+                if {$EndNode == ""} {
+                    set EndNode $currentNode
+                    $c delete $ThisArcIndex2
+                    set ThisArcIndex2 ""
+
+                    # Check if StartNode and EndNode are different, adjacent
+                    # with each other and incident with ThisArcIndex
+
+                    set x [$ThisGraph arc $ThisArcIndex tail]
+                    set y [$ThisGraph arc $ThisArcIndex align]
+                    if {$y!="*"} {set y [$ThisGraph node $y thread]}
+
+                    while {$x!=$StartNode && $x!=$EndNode && $y!="*"} {
+                        set x $y
+                        set y [$ThisGraph node $y thread]
+                    }
+
+                    if {$y=="*"} {set y [$ThisGraph arc $ThisArcIndex head]}
+
+                    if {($x!=$StartNode && $x!=$EndNode) || \
+                        ($y!=$StartNode && $y!=$EndNode) || \
+                        ($x==$y)} \
+                    {
+                        set StartNode ""
+                        set Mode "insert arcs"
+                        MakeHelp "bad segment end nodes"
+                        break
+                    }
+
+                    set thisLength [llength $ThisCoords]
+
+                    if {$thisLength == 4} {
+                        # No bend nodes were added
+
+                        set StartNode ""
+                        set Mode "insert arcs"
+                        MakeHelp "(L) select start node  (R) add bend nodes"
+                        break
+                    }
+
+                    set goblinCoords ""
+
+                    if {$x==$EndNode} {
+                        # Revert the order of bend nodes
+
+                        for {set i [expr {$thisLength-4}]} {$i > 1} {incr i -2} {
+                            lappend goblinCoords \
+                                [GoblinCX [lindex $ThisCoords $i] $goblinBendSep] \
+                                [GoblinCY [lindex $ThisCoords [expr $i+1]] $goblinBendSep]
+                        }
+                    } else {
+                        for {set i 2} {$i < [expr {$thisLength-2}]} {incr i 2} {
+                            lappend goblinCoords \
+                                [GoblinCX [lindex $ThisCoords $i] $goblinBendSep] \
+                                [GoblinCY [lindex $ThisCoords [expr $i+1]] $goblinBendSep]
+                        }
+                    }
+
+                    if {[$ThisGraph arc $ThisArcIndex align] == "*"} {
+                        set LabelNode [$ThisGraph arc $ThisArcIndex set align \
+                            [GoblinCX %x $goblinFineSep] [GoblinCY %y $goblinFineSep] ]
+                        eval $ThisGraph node $LabelNode set thread \
+                            [lrange $goblinCoords 0 [expr {$thisLength-3}]]
+
+                        set Mode "align label"
+                        MakeHelp "(L) align label"
+                    } else {
+                        if {$x==[$ThisGraph arc $ThisArcIndex tail]} {
+                            set x [$ThisGraph arc $ThisArcIndex align]
+                        }
+
+                        eval $ThisGraph node $x set thread \
+                            [lrange $goblinCoords 0 [expr {$thisLength-3}]]
+
+                        set Mode "insert arcs"
+                        MakeHelp "(L) select start node  (R) add bend nodes"
+                    }
+
+                    $c delete $RevArcIndex([expr $ThisArcIndex/2])
+                    $c delete $HandleIndex([expr $ThisArcIndex/2])
+                    DrawArc [expr $ThisArcIndex/2] [EdgeColour [expr $ThisArcIndex/2]]
+
+                    set StartNode ""
+
+                    PropagateModifications
+                }
+            } else {
+                lappend ThisCoords [CurrentCX %x $goblinBendSep] [CurrentCY %y $goblinBendSep]
+                eval $c coords $ThisArcIndex2 $ThisCoords
+            }
+        }
+
+        if {[string equal $Mode "delete objects"]} {
+            if {$currentNode != ""} {
+                UploadNodeLabels
+                $ThisGraph node $currentNode delete
+                DownloadNodeLabels ""
+                PropagateModifications
+                InitEditor
+            }
+
+            if {$currentArc != ""} {
+                UploadArcLabels
+
+                set v [$ThisGraph arc [expr {2*$currentArc}] align]
+                set x [$ThisGraph arc [expr {2*$currentArc}] head]
+                set y [$ThisGraph arc [expr {2*$currentArc}] tail]
+
+                if {$v == "*" || $x == $y} {
+                    $ThisGraph arc [expr {2*$currentArc}] delete
+                    DownloadArcLabels ""
+                } else {
+                    $ThisGraph arc [expr {2*$currentArc}] straight
+                    DownloadArcLabels $currentArc
+                }
+
+                PropagateModifications
+                InitEditor
+            }
+        }
+    }
+
+    bind $c <B1-Motion> {
+        if {[string equal $Mode "move nodes"] || \
+            [string equal $Mode "insert nodes"]} \
+        {
+            if {$MoveNode != ""} {
+                if {$MoveNode<[$ThisGraph #nodes]} {
+                    DropNode $MoveNode [CurrentCX %x $goblinNodeSep] \
+                        [CurrentCY %y $goblinNodeSep] $goblinNodeSep
+                    DownloadNodeLabels $MoveNode
+                } else {
+                    DropNode $MoveNode [CurrentCX %x $goblinBendSep] \
+                        [CurrentCY %y $goblinBendSep] $goblinBendSep
+                }
+            }
+
+            if {$MoveArc != ""} {
+                DropNode [$ThisGraph arc [expr {2*$MoveArc}] align] \
+                    [$c canvasx %x] [$c canvasy %y] $goblinFineSep
+            }
+        }
+    }
+
+    bind $c <Motion> {
+        if {[string equal $Mode "insert arcs"] || \
+            [string equal $Mode "add bend nodes"]} \
+        {
+            if {$StartNode != ""} {
+                set thisLength [llength $ThisCoords]
+                set thiscx [CurrentCX %x $goblinBendSep]
+                set thiscy [CurrentCY %y $goblinBendSep]
+
+                if {$goblinArcStyle==2} {
+                    set prevcx [lindex $ThisCoords [expr {$thisLength-4}]]
+                    set prevcy [lindex $ThisCoords [expr {$thisLength-3}]]
+
+                    if {$thiscx > $prevcx} {
+                        set diffcx [expr {$thiscx-$prevcx}]
+                    } else {
+                        set diffcx [expr {$prevcx-$thiscx}]
+                    }
+
+                    if {$thiscy > $prevcy} {
+                        set diffcy [expr {$thiscy-$prevcy}]
+                    } else {
+                        set diffcy [expr {$prevcy-$thiscy}]
+                    }
+
+                    if {$diffcx*0.95>$diffcy} {set thiscy $prevcy}
+                    if {$diffcx<$diffcy*0.95} {set thiscx $prevcx}
+                }
+
+                set ThisCoords \
+                    [lreplace $ThisCoords \
+                        [expr {$thisLength-2}] \
+                        [expr {$thisLength-1}] \
+                        $thiscx $thiscy \
+                    ]
+                eval $c coords $ThisArcIndex2 $ThisCoords
+            }
+        }
+
+        if {[string equal $Mode "align label"]} {
+            $c coords $HandleIndex($ThisArc) \
+                [expr {[CurrentCX %x $goblinFineSep]-4}] \
+                [expr {[CurrentCY %y $goblinFineSep]-4}] \
+                [expr {[CurrentCX %x $goblinFineSep]+4}] \
+                [expr {[CurrentCY %y $goblinFineSep]+4}]
+        }
+    }
+
+    bind $c <ButtonRelease-1> {
+        if {[string equal $Mode "move nodes"] || \
+            [string equal $Mode "insert nodes"]} \
+        {
+            if {$MoveNode != ""} {
+                set MoveNode ""
+                PropagateModifications
+            }
+
+            if {$MoveArc != ""} {
+                set MoveArc ""
+                PropagateModifications
+            }
+        }
+    }
+
+    bind $c <Button-3> {
+        if {[string equal $Mode "insert nodes"]} {
+            if {![$ThisGraph is bipartite]} {break}
+
+            if {$currentNode == ""} {break}
+
+            if {[$ThisGraph node $currentNode first]=="*"} {
+                UploadNodeLabels
+                $ThisGraph node $currentNode swap
+                DownloadNodeLabels ""
+                InitEditor
+                PropagateModifications
+                MakeHelp "(L) place new node  (R) Move to other component"
+            } else {
+                PostStatusInfo "node must be isolated"
+            }
+        }
+
+        if {[string equal $Mode "insert arcs"]} {
+            if {$ThisArcIndex2 != ""} {
+                $c delete $ThisArcIndex2
+                set ThisArcIndex2 ""
+                set StartNode ""
+                MakeHelp "(L) select start node  (R) add bend nodes"
+            } else {
+                if {$currentArc == ""} {break}
+
+                set ThisArcIndex [expr {2*$currentArc}]
+                set StartNode ""
+                UploadArcLabels
+                DownloadArcLabels $currentArc
+                set Mode "add bend nodes"
+                MakeHelp "(L) select segment start node"
+            }
+        }
+
+        if {[string equal $Mode "sort incidences"] && $ThisNode!=""} {
+            set Mode "shift incidence"
+            MakeHelp "(L) mark as first  (R) cut incidence"
+            break
+        }
+
+        if {[string equal $Mode "shift incidence"]} {
+            set Mode "paste incidence"
+            MakeHelp "(L) scan incidences  (R) paste here"
+            set ThisCutArc $ThisArcIndex
+            break
+        }
+
+        if {[string equal $Mode "paste incidence"]} {
+            set Mode "sort incidences"
+            MakeHelp "(L) scan/select node  (R) select incidence"
+            $ThisGraph arc $ThisArcIndex set right $ThisCutArc
+            HighlightIncidences $ThisNode
+            PropagateModifications
+            break
+        }
+
+        if {[string equal $Mode "redirect arcs"]} {
+            if {$currentArc!="" && ![$ThisGraph is undirected] && \
+                ![$ThisGraph is directed]} \
+            {
+                $ThisGraph arc [expr {2*$currentArc}] set orientation \
+                    [expr {1-[$ThisGraph arc [expr {2*$currentArc}] orientation]}]
+                RedrawArc $currentArc
+                UploadArcLabels
+                DownloadArcLabels $currentArc
+                PropagateModifications
+            }
+        }
+
+        if {[string equal $Mode "align label"] && $LabelNode==""} {
+            $c delete $HandleIndex($NewArc)
+            $c delete $RevArcIndex($NewArc)
+            DrawArc $NewArc [EdgeColour $NewArc]
+            set Mode "insert arcs"
+            MakeHelp "(L) select start node"
+        }
+
+        if {[string equal $Mode "set colours"]} {
+            if {$currentNode != "" && $currentNode<[$ThisGraph #nodes]} {
+                set newColour [$ThisGraph node $currentNode colour]
+
+                if {$newColour!="*" && $newColour<[expr [$ThisGraph #nodes]-1]} {
+                    incr newColour
+                } else {
+                    if {$newColour=="*"} {
+                        set newColour 0
+                    } else {
+                        set newColour "*"
+                    }
+                }
+
+                $c itemconfigure current -fill [goblin colour $newColour]
+                UploadNodeLabels
+                $ThisGraph node $currentNode set colour $newColour
+                DownloadNodeLabels $currentNode
+                PropagateModifications
+            }
+
+            if {$currentArc != ""} {
+                set newColour [$ThisGraph arc [expr {2*$currentArc}] colour]
+
+                if {$newColour=="*" || $newColour!=[expr [$ThisGraph #arcs]-1]} {
+                    if {$newColour=="*"} {
+                        set newColour 0
+                    } else {
+                        incr newColour
+                    }
+                    $c itemconfigure $RevArcIndex($currentArc) \
+                        -fill [goblin colour $newColour]
+                } else {
+                    set newColour "*"
+                    $c itemconfigure $RevArcIndex($currentArc) -fill black
+                }
+
+                UploadArcLabels
+                $ThisGraph arc [expr {2*$currentArc}] set colour $newColour
+                DownloadArcLabels $currentArc
+                PropagateModifications
+            }
+        }
+
+        if {[string equal $Mode "set predecessors"]} {
+            if {$EndNode != ""} {
+                UploadNodeLabels
+                $ThisGraph node $EndNode set predecessor "*"
+                PropagateModifications
+                DownloadNodeLabels $EndNode
+                set EndNode ""
+                MakeHelp "(L) select node"
+                InitEditor
+            }
+        }
+
+        if {[string equal $Mode "delete objects"]} {
+            if {$currentArc != ""} {
+                UploadArcLabels
+                $ThisGraph arc [expr {2*$currentArc}] contract
+                DownloadArcLabels $currentArc
+                PropagateModifications
+                InitEditor
+            }
+        }
+    }
+
+    DrawGraph
+}

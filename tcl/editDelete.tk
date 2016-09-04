@@ -1,0 +1,66 @@
+
+#-------------------------------------------------------------------------------
+# Module:     editDelete.tk
+# Activation: Dynamically loaded on user request
+# Scope:      Dialog for deletion of potential solutions
+#-------------------------------------------------------------------------------
+
+
+
+proc DeleteSolutions {} {
+    global WDDelete DefPadX ThisSolution
+
+    set title "Delete Labels"
+
+    if {[RegisterFormOrWindow $title deleteSolution WDDelete DeleteSolutions \
+            "Cancel"        {} \
+            ""              {} \
+            ""              {} \
+            ""              {} \
+            "Delete"        {
+                $ThisGraph delete $ThisSolution
+                PropagateModifications
+            } \
+        ]
+    } {
+        return
+    }
+
+
+    if {![info exists ThisSolution] || \
+            ($ThisSolution!="subgraph" && $ThisSolution!="potentials" && \
+             $ThisSolution!="partition" && $ThisSolution!="colours" && \
+             $ThisSolution!="labels" && $ThisSolution!="predecessors" && \
+             $ThisSolution!="edgecolours")} {
+        set ThisSolution "subgraph"
+    }
+
+    frame $WDDelete.options
+    pack $WDDelete.options -padx $DefPadX -pady 3m -side top -anchor w
+
+    label $WDDelete.options.label -text "Data Structure:" -anchor w
+    radiobutton $WDDelete.options.subgraph -text "Subgraph" \
+        -variable ThisSolution -value "subgraph" -anchor w
+    radiobutton $WDDelete.options.labels -text "Distance Labels" \
+        -variable ThisSolution -value "labels" -anchor w
+    radiobutton $WDDelete.options.predecessors -text "Predecessor Labels" \
+        -variable ThisSolution -value "predecessors" -anchor w
+    radiobutton $WDDelete.options.colours -text "Node Colours" \
+        -variable ThisSolution -value "colours" -anchor w
+    radiobutton $WDDelete.options.potentials -text "Node Potentials" \
+        -variable ThisSolution -value "potentials" -anchor w
+    radiobutton $WDDelete.options.partition -text "Node Partition" \
+        -variable ThisSolution -value "partition" -anchor w
+    radiobutton $WDDelete.options.edgeColours -text "Edge Colours" \
+        -variable ThisSolution -value "edgecolours" -anchor w
+    pack $WDDelete.options.label $WDDelete.options.subgraph \
+        $WDDelete.options.labels $WDDelete.options.predecessors \
+        $WDDelete.options.colours $WDDelete.options.potentials \
+        $WDDelete.options.partition $WDDelete.options.edgeColours \
+        -side top -fill x
+
+
+    DisplayForm $title
+}
+
+DeleteSolutions

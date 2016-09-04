@@ -1,0 +1,1080 @@
+
+#-------------------------------------------------------------------------------
+# Module:     menuOptimize.tk
+# Activation: Loaded during GOBLET startup
+# Scope:      Optimize menu item, bindings, solver dialogs and
+#             execution of solver threads
+#-------------------------------------------------------------------------------
+
+
+
+proc MakeOptimizeMenu {} {
+    global ThisGraph
+
+    destroy .mbar.optimize.menu
+
+    menu .mbar.optimize.menu -tearoff false
+    if {[$ThisGraph is mip]} {
+        # LP solver and integer programming methods
+
+        .mbar.optimize.menu add command -label "Solve LP Relaxation"\
+            -underline 6 -command LPRelaxation
+        .mbar.optimize.menu add command -label "Solve Mixed Integer Problem"\
+            -underline 6 -command MixedInteger
+    } else {
+        menu .mbar.optimize.menu.vertexRouting -tearoff false
+        .mbar.optimize.menu add cascade -label "Vertex Routing" \
+            -underline 0 -menu .mbar.optimize.menu.vertexRouting
+        .mbar.optimize.menu.vertexRouting add command -label "Minimum Spanning Tree" \
+            -underline 0 -command SolveMinTree
+        .mbar.optimize.menu.vertexRouting add command -label "Maximum Spanning Tree" \
+            -underline 0 -command SolveMaxTree
+        .mbar.optimize.menu.vertexRouting add command -label "Travelling Salesman" \
+            -underline 0 -command SolveTSP
+        .mbar.optimize.menu.vertexRouting add command -label "Minimum 1-Cycle Tree" \
+            -underline 0 -command SolveMin1Tree
+        .mbar.optimize.menu.vertexRouting add command -label "Minimum Steiner Tree" \
+            -underline 0 -command SolveSteinerTree
+
+        if {[$ThisGraph is directed]} {
+            .mbar.optimize.menu.vertexRouting add command -label "Maximum Tree Packing" \
+                -underline 5 -command SolveTreePacking
+        }
+
+        menu .mbar.optimize.menu.edgeRouting -tearoff false
+        .mbar.optimize.menu add cascade -label "Edge Routing" \
+            -underline 0 -menu .mbar.optimize.menu.edgeRouting
+        .mbar.optimize.menu.edgeRouting add command -label "Shortest Path Tree" \
+            -underline 0 -command SolveShortestPath
+
+        if {[$ThisGraph is directed]} {
+            .mbar.optimize.menu.edgeRouting add command -label "Residual Shortest Path Tree" \
+                -underline 0 -command SolveReducedPath
+            .mbar.optimize.menu.edgeRouting add command -label "Critical Path" \
+                -underline 0 -command CriticalPath
+        }
+
+        .mbar.optimize.menu.edgeRouting add command -label "Maximum st-Flow" \
+            -underline 0 -command SolveMaxFlow
+        .mbar.optimize.menu.edgeRouting add command -label "Minimum Cost st-Flow" \
+            -underline 8 -command SolveMinCFlow
+        .mbar.optimize.menu.edgeRouting add command -label "Feasible b-Flow" \
+            -underline 0 -command {
+                CallSolver {Feasible b-Flow} {$ThisGraph circulation} {
+                    global goblinSubgraph
+                    set goblinSubgraph 3
+                    PostSolverMessage "Problem is feasible"
+                }
+            }
+        .mbar.optimize.menu.edgeRouting add command -label "Minimum Cost b-Flow" \
+            -underline 9 -command {
+                CallSolver {Minimum Cost b-Flow} {$ThisGraph minccirc} {
+                    global goblinSubgraph
+                    set goblinSubgraph 3
+                    PostSolverMessage "Final objective value is $SolverData(result)"
+                }
+            }
+        .mbar.optimize.menu.edgeRouting add command -label "Eulerian Cycle" \
+            -underline 0 -command EulerianCycle
+
+        if {[$ThisGraph is directed] || [$ThisGraph is undirected]} {
+            .mbar.optimize.menu.edgeRouting add command -label "Maximum Eulerian Subgraph" \
+                -underline 17 -command SolvePostman
+        }
+    }
+
+    if {![$ThisGraph is mip]} {
+        menu .mbar.optimize.menu.bipartition -tearoff false
+        .mbar.optimize.menu add cascade -label "Bipartitions" \
+            -underline 0 -menu .mbar.optimize.menu.bipartition
+        .mbar.optimize.menu.bipartition add command -label "Maximum Edge Cut" \
+            -underline 0 -command SolveMaxCut
+
+        if {[$ThisGraph is sparse]} {
+            .mbar.optimize.menu.bipartition add command -label "Maximum Stable Set" \
+                -underline 0 -command SolveStableSet
+            .mbar.optimize.menu.bipartition add command -label "Minimum Vertex Cover" \
+                -underline 0 -command SolveVertexCover
+            .mbar.optimize.menu.bipartition add command -label "Maximum Clique" \
+                -underline 0 -command SolveClique
+
+            .mbar.optimize.menu add command -label "Graph Partitions..." \
+                -underline 0 -command GraphPartitions
+
+            menu .mbar.optimize.menu.connectivity -tearoff false
+            .mbar.optimize.menu add cascade -label "Connectivity" \
+            -underline 0 -menu .mbar.optimize.menu.connectivity
+
+            .mbar.optimize.menu.connectivity add command -label "Edge Connectivity" \
+                -command SolveEdgeConnectivity
+            .mbar.optimize.menu.connectivity add command -label "Node Connectivity" \
+                -command SolveNodeConnectivity
+            .mbar.optimize.menu.connectivity add command -label "Generalized Connectivity" \
+                -command SolveGeneralizedConnectivity
+            .mbar.optimize.menu.connectivity add command -label "Edge Connected Components..." \
+                -command SolveComponents
+            if {![$ThisGraph is undirected]} {
+                .mbar.optimize.menu.connectivity add command -label "Strong Edge Connectivity" \
+                    -command SolveStrongEdgeConnectivity
+                .mbar.optimize.menu.connectivity add command -label "Strong Node Connectivity" \
+                    -command SolveStrongNodeConnectivity
+                .mbar.optimize.menu.connectivity add command -label "Generalized Strong Connectivity" \
+                    -command SolveGeneralizedStrongConnectivity
+                .mbar.optimize.menu.connectivity add command -label "Strong Components..." \
+                    -command {SolveComponents -strong}
+            }
+        }
+
+        menu .mbar.optimize.menu.ordering -tearoff false
+        .mbar.optimize.menu add cascade -label "Ordering & Orientation" \
+            -underline 0 -menu .mbar.optimize.menu.ordering
+        .mbar.optimize.menu.ordering add command -label "Bipolar Numbering" \
+            -underline 0 -command BipolarOrientation
+        .mbar.optimize.menu.ordering add command -label "Open Ear Decomposition" \
+            -underline 0 -command EarDecomposition
+        .mbar.optimize.menu.ordering add command -label "Minimum Feedback Arc Set" \
+            -underline 0 -command FeedbackArcSet
+
+        if {[$ThisGraph is directed]} {
+            .mbar.optimize.menu.ordering add command -label "Topological Order" \
+                -underline 0 -command TopSort
+        }
+    }
+
+    if {[$ThisGraph is undirected]} {
+        .mbar.optimize.menu add separator
+        menu .mbar.optimize.menu.matching -tearoff false
+        .mbar.optimize.menu add cascade -label "Matching Problems" \
+            -underline 0 -menu .mbar.optimize.menu.matching
+        .mbar.optimize.menu.matching add command -label "Cardinality Matching" \
+            -underline 0 -command SolveMaxMatch
+        .mbar.optimize.menu.matching add command -label "Weighted Matching" \
+            -underline 0 -command SolveMinCMatch
+        .mbar.optimize.menu.matching add command -label "Weighted Edge Cover" \
+            -underline 9 -command SolveMinCEdgeCover
+        .mbar.optimize.menu.matching add command -label "Minimum T-Join" \
+            -underline 8 -command SolveTJoin
+    }
+
+    if {[$ThisGraph is balanced]} {
+        .mbar.optimize.menu add separator
+        .mbar.optimize.menu add command -label "Balanced Network Flows..." \
+            -underline 2 -command BalancedNetworkFlows
+    }
+
+    .mbar.optimize.menu add separator
+    .mbar.optimize.menu add command -label "Restart/Stop Solver" \
+        -accelerator Ctrl+C -command StartOrStop
+    .mbar.optimize.menu add separator
+    .mbar.optimize.menu add command -label "Optimization Level..." \
+        -accelerator Shift+Ctrl+O -command SourceOptLevel
+    .mbar.optimize.menu add command -label "Method Options..." \
+        -accelerator Shift+Ctrl+M -command SourceMethOpt
+    .mbar.optimize.menu add command -label "Data Structures..." \
+        -accelerator Shift+Ctrl+S -command SourceDataOpt
+}
+
+proc CallSolver {{title ""} {command ""} {scriptRegular {}} {specialResult ""} {scriptSpecial {}}} {
+    if {![goblin solver idle]} {
+        PostSolverMessage "Problem solver is active"
+        return
+    }
+
+    global SolverData ThisGraph ThisDegree ThisNColours
+
+    if {$command==""} {
+        if {$SolverData(command)==""} {
+            PostStatusInfo "Choose an algorithm"
+            return
+        }
+    } else {
+        if {$command!=$SolverData(command)} {
+            set SolverData(title)         $title
+            set SolverData(command)       $command
+            set SolverData(specialResult) $specialResult
+            set SolverData(scriptRegular) $scriptRegular
+            set SolverData(scriptSpecial) $scriptSpecial
+        }
+    }
+
+    set substitutedCommand [eval concat $SolverData(command)]
+
+    global StartTime PrevTime TotalTime
+
+    PostSolverMessage "Computation is running..."
+    set PrevTime "running"
+    update idletasks
+
+    global goblinCommLevel
+    if {$goblinCommLevel} {
+        global FileName goblinExtension Toolbar c SingleStep \
+            goblinMasterEvent Log UpdateCycle TraceLock goblinBreakLevel \
+            goblinLogLevel ThisBackup
+
+        set file [open "$FileName.tcl" w]
+        puts $file "goblin alias $ThisGraph [$ThisGraph handle]"
+        puts $file "set state \[catch \{$substitutedCommand\} result\]"
+        puts $file "if \{\$state==0\} \{"
+        puts $file "    goblin solver return \$result"
+        puts $file "\} else \{"
+        puts $file "    goblin solver throw \$result"
+        puts $file "\}"
+        close $file
+
+        $Toolbar.solve configure -image running_solver
+        set TraceLock 0
+        set goblinBreakLevel 10000
+
+        if {[info exists c] && [winfo exists $c] && \
+                [file exists $FileName.backup$ThisBackup.gob]} {
+            TraceObject $FileName.backup$ThisBackup
+            set SingleStep 1
+        } else {
+            set SingleStep 0
+        }
+
+        if {[catch {goblin messenger filename} prevTraceFile]} {
+            set prevTraceFile $FileName.backup$ThisBackup
+        }
+
+        set StartTime [clock seconds]
+        set state [catch {goblin solver thread $FileName.tcl} result]
+        while {![goblin solver idle]} {
+            if {$goblinCommLevel>=2} {
+                if {![goblin solver idle]} {
+                    UpdateActiveDialogs
+
+                    if {[info exists Log] && [winfo exists $Log]} {
+                        UploadMessages
+                    }
+
+                    set retState [catch {goblin messenger filename} traceFile]
+                    if {$retState==0 && $prevTraceFile==$traceFile} {set retState 1}
+
+                    if {$goblinCommLevel>=3 && ![goblin solver idle] && \
+                        $goblinLogLevel<=$goblinBreakLevel} {
+                        if {[info exists c] && [winfo exists $c]} {
+                            if {!$retState} {
+                                TraceObject [file rootname $traceFile]
+                                set prevTraceFile $traceFile
+                                if {!$SingleStep} {goblin messenger unblock}
+                            }
+                        } else {
+                            set SingleStep 0
+                            goblin messenger unblock
+                        }
+                    }
+
+                    if {$goblinLogLevel<=$goblinBreakLevel && \
+                        $SingleStep!=0 && $retState==0} {
+                        PostSolverMessage "Waiting at trace point"
+                        set TraceLock 1
+                        UpdateProgressBar
+
+                        while {$TraceLock!=0} {
+                            vwait TraceLock
+                        }
+                    } else {
+                        set dummyTimer 0
+                        after $UpdateCycle set dummyTimer 1
+                        vwait dummyTimer
+                    }
+                }
+            } else {
+                vwait goblinMasterEvent
+            }
+        }
+
+        set PrevTime [expr {[clock seconds]-$StartTime}]
+        set TotalTime [expr $TotalTime+$PrevTime]
+        set state [catch {goblin solver result} SolverData(result)]
+        file delete $FileName.tcl
+        $Toolbar.solve configure -image start_solver
+    } else { #Do not use threads
+        set StartTime [clock seconds]
+        set state [catch {eval $substitutedCommand} SolverData(result)]
+        set PrevTime [expr {[clock seconds]-$StartTime}]
+        set TotalTime [expr $TotalTime+$PrevTime]
+    }
+
+    if {$state != 0} {
+        AcknowledgementMessage $SolverData(result)
+        PostSolverMessage "$SolverData(result)"
+        ViewMessenger
+    } else {
+        if {$SolverData(scriptRegular)=={}} {
+            if {$SolverData(result)!="" && $SolverData(result)!="*"} {
+                PostSolverMessage "Objective value: $SolverData(result)"
+            } else {
+                PostSolverMessage "Computation is finished"
+            }
+        } else {
+            if {$SolverData(result)==$SolverData(specialResult) && $SolverData(scriptSpecial)!={}} {
+                eval $SolverData(scriptSpecial)
+            } else {
+                eval $SolverData(scriptRegular)
+            }
+        }
+
+        if {[info exists Log] && [winfo exists $Log]} {ViewMessenger}
+    }
+
+    global Mode
+    set Mode "display object"
+    PropagateModifications
+}
+
+proc StartOrStop {} {
+    if {[goblin solver idle]} {
+        CallSolver
+    } else {
+        global Toolbar
+        goblin solver stop
+        $Toolbar.solve configure -image stopped_solver
+    }
+}
+
+set SolverData(command) ""
+
+proc PostSolverMessage {message} {
+    global SolverData ThisGraph ThisDegree ThisNColours
+    PostStatusInfo [eval concat $SolverData(title) "-" $message]
+}
+
+proc LPRelaxation {} {
+    global ThisGraph
+    CallSolver {LP Relaxation} {$ThisGraph solve lp}
+}
+
+proc MixedInteger {} {
+    global ThisGraph
+    CallSolver {Mixed Integer Problem} {$ThisGraph solve mip}
+}
+
+proc CallWithRootNode {_execCommand {rootName "Root Node"}} {
+    global ThisGraph goblinRoot execCommand WDRootNode
+
+    set goblinRoot [$ThisGraph root]
+    set execCommand $_execCommand
+
+    set WDRootNode .rootNode
+
+    destroy $WDRootNode
+    toplevel $WDRootNode
+    wm withdraw $WDRootNode
+    wm title $WDRootNode "GOBLIN Prompt"
+
+    frame $WDRootNode.frame
+    pack $WDRootNode.frame -padx 2m -pady 3m -side top -anchor w
+
+
+    label $WDRootNode.frame.text -text "$rootName:  "
+    entry $WDRootNode.frame.entry -textvariable goblinRoot \
+        -bg white -width 8
+    pack $WDRootNode.frame.text $WDRootNode.frame.entry \
+        -side left -fill x -expand 1
+    bind $WDRootNode.frame.entry <Return> {
+        if {[QualifiedNode $goblinRoot]} {
+            $ThisGraph set root $goblinRoot
+            destroy .rootNode
+            eval $execCommand
+        }
+    }
+
+    focus $WDRootNode.frame.entry
+
+    bind $WDRootNode <FocusOut> {
+        if {[winfo exists .rootNode]} {
+            raise .rootNode .
+        }
+    }
+
+    bind . <FocusIn> {
+        if {[winfo exists .rootNode]} {
+            raise .rootNode .
+        }
+    }
+
+    after 500 {AdjustWithRootWindow $WDRootNode}
+    after 500 {wm resizable $WDRootNode 0 0}
+}
+
+proc CallWithSourceAndTarget {_execCommand {sourceName "Source Node"} {targetName "Target Node"}}  {
+    global ThisGraph goblinSource goblinTarget execCommand WDSourceAndTarget
+
+    set goblinSource [$ThisGraph source]
+    set goblinTarget [$ThisGraph target]
+    set execCommand $_execCommand
+
+    set WDSourceAndTarget .sourceAndTargetNode
+
+    destroy $WDSourceAndTarget
+    toplevel $WDSourceAndTarget
+    wm withdraw $WDSourceAndTarget
+    wm title $WDSourceAndTarget "GOBLIN Prompt"
+
+    frame $WDSourceAndTarget.frame
+    pack $WDSourceAndTarget.frame -padx 2m -pady 3m -side top -anchor w
+
+
+    label $WDSourceAndTarget.frame.textSource -text "$sourceName:  "
+    grid $WDSourceAndTarget.frame.textSource \
+        -row 0 -column 0 -rowspan 1 -columnspan 1 -sticky w -padx 1m
+
+    entry $WDSourceAndTarget.frame.entrySource -textvariable goblinSource \
+        -bg white -width 8
+    grid $WDSourceAndTarget.frame.entrySource \
+        -row 0 -column 1 -rowspan 1 -columnspan 1 -sticky we -padx 1m
+
+    label $WDSourceAndTarget.frame.textTarget -text "$targetName:  "
+    grid $WDSourceAndTarget.frame.textTarget \
+        -row 1 -column 0 -rowspan 1 -columnspan 1 -sticky w -padx 1m
+
+    entry $WDSourceAndTarget.frame.entryTarget -textvariable goblinTarget \
+        -bg white -width 8
+    grid $WDSourceAndTarget.frame.entryTarget \
+        -row 1 -column 1 -rowspan 1 -columnspan 1 -sticky we -padx 1m
+
+
+    bind $WDSourceAndTarget.frame.entrySource <Return> {
+        if {[QualifiedNode $goblinSource]} {
+            focus $WDSourceAndTarget.frame.entryTarget
+        }
+    }
+    bind $WDSourceAndTarget.frame.entryTarget <Return> {
+        if {[QualifiedNode $goblinSource] && [QualifiedNode $goblinTarget]} {
+            $ThisGraph set source $goblinSource
+            $ThisGraph set target $goblinTarget
+            destroy .sourceAndTargetNode
+            eval $execCommand
+        } else {
+            if {![QualifiedNode $goblinSource]} {
+                focus $WDSourceAndTarget.frame.entrySource
+            }
+        }
+    }
+
+    focus $WDSourceAndTarget.frame.entrySource
+
+    bind $WDSourceAndTarget <FocusOut> {
+        if {[winfo exists .sourceAndTargetNode]} {
+            raise .sourceAndTargetNode .
+        }
+    }
+
+    bind . <FocusIn> {
+        if {[winfo exists .sourceAndTargetNode]} {
+            raise .sourceAndTargetNode .
+        }
+    }
+
+    after 500 {AdjustWithRootWindow $WDSourceAndTarget}
+    after 500 {wm resizable $WDSourceAndTarget 0 0}
+}
+
+proc SolveMinTree {} {
+    CallWithRootNode {
+        CallSolver {Minimum Spanning [$ThisGraph root]-Tree} {
+            $ThisGraph mintree -root [$ThisGraph root]
+        } {
+            global goblinPredecessors
+            set goblinPredecessors 1
+            PostSolverMessage "Final length is $SolverData(result)"
+        }
+    } "Root Node (optional)"
+}
+
+proc SolveMaxTree {} {
+    CallWithRootNode {
+        CallSolver {Maximum Spanning [$ThisGraph root]-Tree} {
+            $ThisGraph mintree -max -root [$ThisGraph root]
+        } {
+            global goblinPredecessors
+            set goblinPredecessors 1
+            PostSolverMessage "Final length is $SolverData(result)"
+        }
+    } "Root Node (optional)"
+}
+
+proc SolveTSP {} {
+    CallWithRootNode {
+        CallSolver {Hamiltonian Cycle} {$ThisGraph tsp [$ThisGraph root]} {
+            global goblinPredecessors
+            set goblinPredecessors 1
+            PostSolverMessage "Final length is $SolverData(result)"
+        }
+    } "Root Node (optional)"
+}
+
+proc SolveMin1Tree {} {
+    CallWithRootNode {
+        CallSolver {Minimum Spanning [$ThisGraph root]-Tree} {
+            $ThisGraph mintree -cycle -root [$ThisGraph root]
+        } {
+            global goblinPredecessors
+            set goblinPredecessors 1
+            PostSolverMessage "Final length is $SolverData(result)"
+        }
+    }
+}
+
+proc SolveSteinerTree {} {
+    CallWithRootNode {
+        CallSolver {[$ThisGraph root]-Steiner Tree} {
+            $ThisGraph steiner [$ThisGraph root]
+        } {
+            global goblinPredecessors
+            set goblinPredecessors 1
+            PostSolverMessage "Final length is $SolverData(result)"
+        }
+    }
+}
+
+proc SolveTreePacking {} {
+    CallWithRootNode {
+        CallSolver {[$ThisGraph root]-Tree Packing} {
+            $ThisGraph treepacking [$ThisGraph root]
+        } {
+            global goblinPredecessors goblinNodeColours
+            set goblinNodeColours 2
+            set goblinPredecessors 1
+            PostSolverMessage "Total multiplicity is $SolverData(result)"
+        }
+    }
+}
+
+proc SolveShortestPath {} {
+    CallWithSourceAndTarget {
+        CallSolver {Shortest Path [$ThisGraph source]-Tree} {
+            $ThisGraph spath -source [$ThisGraph source] -target [$ThisGraph target]
+        } {
+            global goblinPredecessors
+            set goblinPredecessors 1
+            PostSolverMessage "Target distance is $SolverData(result)"
+        } "*" {
+            global goblinPredecessors
+            set goblinPredecessors 1
+            PostSolverMessage "Target node is unreachable"
+        }
+    } "Source Node" "Target Node (optional)"
+}
+
+proc SolveReducedPath {} {
+    CallWithSourceAndTarget {
+        CallSolver {Shortest Path [$ThisGraph source]-Tree} {
+            $ThisGraph spath -source [$ThisGraph source] -target [$ThisGraph target] -residual"
+        } {
+            global goblinPredecessors
+            set goblinPredecessors 1
+            PostSolverMessage "Target distance is $SolverData(result)"
+        } "*" {
+            global goblinPredecessors
+            set goblinPredecessors 1
+            PostSolverMessage "Target node is unreachable"
+        }
+    } "Source Node" "Target Node (optional)"
+}
+
+proc SolveMaxFlow {} {
+    CallWithSourceAndTarget {
+        CallSolver {Maximum ([$ThisGraph source],[$ThisGraph target])-Flow} {
+            $ThisGraph maxflow [$ThisGraph source] [$ThisGraph target]
+        } {
+            global goblinSubgraph
+            set goblinSubgraph 3
+            PostSolverMessage "Final flow value is $SolverData(result)"
+        }
+    }
+}
+
+proc SolveMinCFlow {} {
+    CallWithSourceAndTarget {
+        CallSolver {Minimum Cost ([$ThisGraph source],[$ThisGraph target])-Flow} {
+            $ThisGraph mincflow [$ThisGraph source] [$ThisGraph target]
+        } {
+            global goblinSubgraph
+            set goblinSubgraph 3
+            PostSolverMessage "Final objective value is $SolverData(result)"
+        }
+    }
+}
+
+proc SolveStableSet {} {
+    CallSolver {Maximum Stable Set} {$ThisGraph stable} {
+        global goblinNodeColours
+        set goblinNodeColours 2
+        PostSolverMessage "Final cardinality is $SolverData(result)"
+    }
+}
+
+proc SolveClique {} {
+    CallSolver {Maximum Clique} {$ThisGraph clique} {
+        global goblinNodeColours
+        set goblinNodeColours 2
+        PostSolverMessage "Final cardinality is $SolverData(result)"
+    }
+}
+
+proc SolveVertexCover {} {
+    CallSolver {Minimum Vertex Cover} {$ThisGraph vertexcover} {
+        global goblinNodeColours
+        set goblinNodeColours 2
+        PostSolverMessage "Final cardinality is $SolverData(result)"
+    }
+}
+
+proc SolveMaxCut {} {
+    CallWithSourceAndTarget {
+        CallSolver {Maximum ([$ThisGraph source],[$ThisGraph target])-Edge Cut} {
+            $ThisGraph maxcut [$ThisGraph source] [$ThisGraph target]
+        } {
+            global goblinNodeColours
+            set goblinNodeColours 2
+            PostSolverMessage "Final multiplicity is $SolverData(result)"
+        }
+    } "Left Hand Node (optional)" "Right Hand Node (optional)"
+}
+
+proc BipolarOrientation {} {
+    CallWithSourceAndTarget {
+        CallSolver {([$ThisGraph source],[$ThisGraph target])-Orientation} {
+            $ThisGraph bipolar -source [$ThisGraph source] -target [$ThisGraph target]
+        } {
+            global goblinNodeColours goblinPredecessors
+            set goblinNodeColours 4
+            set goblinPredecessors 0
+            PostSolverMessage "Bipolar orientation found"
+        }
+    } "Source Node (optional)" "Target Node (optional)"
+}
+
+proc EarDecomposition {} {
+    CallWithSourceAndTarget {
+        CallSolver {Ear Decomposition} {
+            $ThisGraph bipolar -source [$ThisGraph source] -target [$ThisGraph target] -decompose
+        } {
+            global goblinArcColours goblinPredecessors
+            set goblinArcColours 3
+            set goblinPredecessors 0
+            PostSolverMessage "Graph has been decomposed"
+        }
+    } "Source Node (optional)" "Target Node (optional)"
+}
+
+proc TopSort {} {
+    CallSolver {Topological Sorting} {$ThisGraph topsort} {
+        PostSolverMessage "Node $SolverData(result) is recurrent"
+    } "*" {
+        global goblinNodeColours goblinNodeLabels
+        set goblinNodeColours 0
+        set goblinNodeLabels 4
+        PostSolverMessage "Graph is acyclic"
+    }
+}
+
+proc GraphPartitions {} {
+    global ThisGraph GoCommand ThisNColours UploadCommand WDInput \
+        NodeColourCommand CliquesCommand EdgeColourCommand
+
+    set NodeColourCommand {
+        if {$ThisNColours=="" || [QualifiedNode $ThisNColours]} {
+            CallSolver {$ThisNColours-Node Colouring} {
+                $ThisGraph colouring $ThisNColours
+            } {
+                global goblinNodeColours
+                set goblinNodeColours 2
+                PostSolverMessage "Graph has been decomposed into $SolverData(result) stable setes"
+            }
+        }
+    }
+
+    set CliquesCommand {
+        if {$ThisNColours=="" || [QualifiedNode $ThisNColours]} {
+            CallSolver {$ThisNColours-Clique Cover} {
+                $ThisGraph cliques $ThisNColours
+            } {
+                global goblinNodeColours
+                set goblinNodeColours 2
+                PostSolverMessage "Graph is covered by $SolverData(result) cliques"
+            }
+        }
+    }
+
+    set EdgeColourCommand {
+        if {$ThisNColours=="" || [QualifiedNode $ThisNColours]} {
+            CallSolver {$ThisNColours-Edge Colouring} {
+                $ThisGraph edgecolouring $ThisNColours
+            } {
+                global goblinArcColours
+                set goblinArcColours 1
+                PostSolverMessage "Graph has been decomposed into $SolverData(result) matchings"
+            }
+        }
+    }
+
+    if {   ![info exists GoCommand]
+        || (   ![string equal $GoCommand $CliquesCommand]
+            && ![string equal $GoCommand $EdgeColourCommand] )} {
+        set GoCommand $NodeColourCommand
+    }
+
+    set UploadCommand {}
+
+    DisplayInputDialog "Graph Partitions" "GraphPartitions" "Solve" "Cancel" {
+        global GoCoomand NodeColourCommand CliquesCommand EdgeColourCommand \
+            DefPadX DefPadY goblinNodeColours
+
+        frame $WDInput.options
+        frame $WDInput.options2
+
+        pack $WDInput.options $WDInput.options2 \
+            -side top -anchor w -padx $DefPadX -pady $DefPadY
+
+        label $WDInput.options.text -text "Set Characteristics:" -anchor w
+        radiobutton $WDInput.options.ncolour -text "Stable Sets (Node Colouring)" \
+            -variable GoCommand -value $NodeColourCommand -anchor w
+        radiobutton $WDInput.options.clique -text "Node Disjoint Cliques" \
+            -variable GoCommand -value $CliquesCommand -anchor w
+        radiobutton $WDInput.options.ecolour -text "1-Matchings (Edge Colouring)" \
+            -variable GoCommand -value $EdgeColourCommand -anchor w
+        pack $WDInput.options.text $WDInput.options.ncolour \
+            $WDInput.options.clique $WDInput.options.ecolour -side top -fill x
+
+        label $WDInput.options2.label -text "Colouring Strategy:" -anchor w
+        radiobutton $WDInput.options2.stop \
+            -text "CELIM" -variable goblinMethColour \
+            -value 0 -anchor w
+        radiobutton $WDInput.options2.exhaustive \
+            -text "DSATUR" -variable goblinMethColour \
+            -value 1 -anchor w
+        pack $WDInput.options2.label $WDInput.options2.stop \
+            $WDInput.options2.exhaustive -fill x
+
+        label $WDInput.frame.text -text "Accepted Bound (optional):"
+        grid $WDInput.frame.text \
+            -row 0 -column 0 -rowspan 1 -columnspan 1 -sticky w -padx 1m
+        entry $WDInput.frame.entry -textvariable ThisNColours -bg white -width 5
+        grid $WDInput.frame.entry \
+            -row 0 -column 1 -rowspan 1 -columnspan 1 -sticky we -padx 1m
+
+        grid columnconfig $WDInput.frame 0 -weight 1 -minsize 0
+        grid columnconfig $WDInput.frame 1 -weight 1 -minsize 0
+
+        bind $WDInput.frame.entry <Return> {eval $GoCommand}
+    }
+
+    global WD
+    focus $WD(GraphPartitions).frame.entry
+}
+
+proc SolveNodeConnectivity {} {
+    global ThisGraph
+
+    CallWithSourceAndTarget [list \
+        CallSolver {Minimum ([$ThisGraph source],[$ThisGraph target])-Node Cut} {
+            $ThisGraph connectivity -source [$ThisGraph source] \
+                                    -target [$ThisGraph target] -node
+        } {
+            global goblinNodeColours
+            set goblinNodeColours 2
+            PostSolverMessage "Node cut capacity is $SolverData(result)"
+        } \
+    ] "Left Hand Node (optional)" "Right Hand Node (optional)"
+}
+
+proc SolveGeneralizedConnectivity {} {
+    global ThisGraph
+
+    CallWithSourceAndTarget [list \
+        CallSolver {Minimum ([$ThisGraph source],[$ThisGraph target])-Cut} {
+            $ThisGraph connectivity -source [$ThisGraph source] \
+                                    -target [$ThisGraph target]
+        } {
+            global goblinNodeColours
+            set goblinNodeColours 2
+            PostSolverMessage "Cut capacity is $SolverData(result)"
+        } \
+    ] "Left Hand Node (optional)" "Right Hand Node (optional)"
+}
+
+proc SolveEdgeConnectivity {} {
+    global ThisGraph
+
+    CallWithSourceAndTarget [list \
+        CallSolver {Minimum ([$ThisGraph source],[$ThisGraph target])-Edge Cut} {
+            $ThisGraph connectivity -source [$ThisGraph source] \
+                                    -target [$ThisGraph target] -edge
+        } {
+            global goblinNodeColours
+            set goblinNodeColours 2
+            PostSolverMessage "Edge cut capacity is $SolverData(result)"
+        } \
+    ] "Left Hand Node (optional)" "Right Hand Node (optional)"
+}
+
+proc SolveStrongNodeConnectivity {} {
+    global ThisGraph
+
+    CallWithSourceAndTarget [list \
+        CallSolver {Minimum ([$ThisGraph source],[$ThisGraph target])-Node Cut} {
+            $ThisGraph connectivity -source [$ThisGraph source] \
+                                    -target [$ThisGraph target] -strong -node
+        } {
+            global goblinNodeColours
+            set goblinNodeColours 2
+            PostSolverMessage "Strong node cut capacity is $SolverData(result)"
+        } \
+    ] "Left Hand Node (optional)" "Right Hand Node (optional)"
+}
+
+proc SolveGeneralizedStrongConnectivity {} {
+    global ThisGraph
+
+    CallWithSourceAndTarget [list \
+        CallSolver {Minimum ([$ThisGraph source],[$ThisGraph target])-Cut} {
+            $ThisGraph connectivity -source [$ThisGraph source] \
+                                    -target [$ThisGraph target] -strong
+        } {
+            global goblinNodeColours
+            set goblinNodeColours 2
+            PostSolverMessage "Strong cut capacity is $SolverData(result)"
+        } \
+    ] "Left Hand Node (optional)" "Right Hand Node (optional)"
+}
+
+proc SolveStrongEdgeConnectivity {} {
+    global ThisGraph
+
+    CallWithSourceAndTarget [list \
+        CallSolver {Minimum ([$ThisGraph source],[$ThisGraph target])-Edge Cut} {
+            $ThisGraph connectivity -source [$ThisGraph source] \
+                                    -target [$ThisGraph target] -strong -edge
+        } {
+            global goblinNodeColours
+            set goblinNodeColours 2
+            PostSolverMessage "Strong edge cut capacity is $SolverData(result)"
+        } \
+    ] "Left Hand Node (optional)" "Right Hand Node (optional)"
+}
+
+proc SolveComponents {{arg1 ""}} {
+    global ThisGraph goblinDegree WDConnOrder
+
+    if {![info exists goblinDegree]} {
+        set goblinDegree 1
+    }
+
+    set WDConnOrder .connOrder
+
+    destroy $WDConnOrder
+    toplevel $WDConnOrder
+    wm withdraw $WDConnOrder
+    wm title $WDConnOrder "GOBLIN Prompt"
+
+    frame $WDConnOrder.frame
+    pack $WDConnOrder.frame -padx 2m -pady 3m -side top -anchor w
+
+
+    label $WDConnOrder.frame.text -text "Degree of Connectivity:  "
+    entry $WDConnOrder.frame.entry -textvariable goblinDegree \
+        -bg white -width 8
+    pack $WDConnOrder.frame.text $WDConnOrder.frame.entry \
+        -side left -fill x -expand 1
+
+    if {$arg1!=""} {
+        bind $WDConnOrder.frame.entry <Return> {
+            destroy .connOrder
+            global goblinDegree ThisGraph
+            CallSolver "Strong Components" \
+                [concat $ThisGraph components -kappa $goblinDegree -strong] {
+                if {$SolverData(result)==0} {
+                    global goblinNodeColours
+                    set goblinNodeColours 2
+                    PostSolverMessage "Graph is strongly disconnected"
+                } else {
+                    PostSolverMessage "Graph is strongly edge-connected"
+                }
+            }
+        }
+    } else {
+        bind $WDConnOrder.frame.entry <Return> {
+            destroy .connOrder
+            global goblinDegree ThisGraph
+            CallSolver "Edge-Connected Components" \
+                [concat $ThisGraph components -kappa $goblinDegree] {
+                if {$SolverData(result)==0} {
+                    global goblinNodeColours
+                    set goblinNodeColours 2
+                    PostSolverMessage "Graph is disconnected"
+                } else {
+                    PostSolverMessage "Graph is edge-connected"
+                }
+            }
+        }
+    }
+
+    focus $WDConnOrder.frame.entry
+
+    bind $WDConnOrder <FocusOut> {
+        if {[winfo exists .connOrder]} {
+            raise .connOrder .
+        }
+    }
+
+    bind . <FocusIn> {
+        if {[winfo exists .connOrder]} {
+            raise .connOrder .
+        }
+    }
+
+    after 500 {AdjustWithRootWindow $WDConnOrder}
+    after 500 {wm resizable $WDConnOrder 0 0}
+}
+
+proc SolveMaxMatch {} {
+    CallSolver {Cardinality Matching} {$ThisGraph maxmatch} {
+        global goblinSubgraph
+        set goblinSubgraph 3
+        PostSolverMessage "Matching with cardinality $SolverData(result) found"
+    }
+}
+
+proc SolveMinCMatch {} {
+    CallSolver {Weighted Matching} {$ThisGraph mincmatch} {
+        global goblinSubgraph
+        set goblinSubgraph 3
+        PostSolverMessage "Final objective value is $SolverData(result)"
+    }
+}
+
+proc SolveMinCEdgeCover {} {
+    CallSolver {Weighted Edge Cover} {$ThisGraph edgecover} {
+        global goblinArcColours
+        set goblinArcColours 1
+        PostSolverMessage "Total edge weight is $SolverData(result)"
+    }
+}
+
+proc SolveTJoin {} {
+    CallSolver {Minimum T-Join} {$ThisGraph tjoin} {
+        global goblinSubgraph
+        set goblinSubgraph 3
+        PostSolverMessage "Total edge weight is $SolverData(result)"
+    }
+}
+
+proc SolvePostman {} {
+    CallSolver {Maximum Eulerian Subgraph} {$ThisGraph postman} {
+        global goblinSubgraph
+        set goblinSubgraph 3
+        PostSolverMessage "Total edge weight is $SolverData(result)"
+    }
+}
+
+proc EulerianCycle {} {
+    CallSolver {Euler Cycle} {$ThisGraph eulerian} {
+        global goblinArcColours
+        set goblinArcColours 3
+        PostSolverMessage "Euler cycle found"
+    } "0" {
+        PostSolverMessage "No Euler cycle exists"
+    }
+}
+
+proc FeedbackArcSet {} {
+    CallSolver {Feedback Arc Set} {$ThisGraph feedback} {
+        global goblinArcColours
+        set goblinArcColours 1
+        PostSolverMessage "$SolverData(result) arcs must be reverted"
+    }
+}
+
+proc CriticalPath {} {
+    CallSolver {Critical Path} {$ThisGraph critical} {
+        global goblinPredecessors
+        set goblinPredecessors 1
+        PostSolverMessage "Critical path ends at node $SolverData(result)"
+    }
+}
+
+proc BalancedNetworkFlows {} {
+    global ThisGraph GoCommand goblinSource \
+        UploadCommand WDInput MaxFlowCommand MinCFlowCommand 
+
+    set goblinSource [$ThisGraph source]
+
+    set MaxFlowCommand {
+        if {[QualifiedNode $goblinSource]} {
+            $ThisGraph set source $goblinSource
+            CallSolver {Maximum Balanced [$ThisGraph source]-Flow} {
+                global goblinSubgraph
+                set goblinSubgraph 3
+                $ThisGraph maxbalflow [$ThisGraph source]
+            }
+        }
+    }
+
+    set MinCFlowCommand {
+        if {[QualifiedNode $goblinSource]} {
+            $ThisGraph set source $goblinSource
+            CallSolver {Min-Cost Balanced [$ThisGraph source]-Flow} {
+                global goblinSubgraph
+                set goblinSubgraph 3
+                $ThisGraph mincbalflow [$ThisGraph source]
+            }
+        }
+    }
+
+    set GoCommand $MaxFlowCommand
+    set UploadCommand {}
+
+    DisplayInputDialog "Balanced Network Flows" "BalancedNetworkFlows" "Solve" "Cancel" {
+        global MaxFlowCommand MinCFlowCommand DefPadX DefPadY
+
+        frame $WDInput.options
+        pack $WDInput.options -side top -anchor w -padx $DefPadX -pady $DefPadY
+
+        label $WDInput.options.text -text "Subgraph Characteristics:" -anchor w
+        radiobutton $WDInput.options.maxflow -text "Maximum st-Flow" \
+            -variable GoCommand -value $MaxFlowCommand -anchor w
+        radiobutton $WDInput.options.mincflow -text "Minimum Cost st-Flow" \
+            -variable GoCommand -value $MinCFlowCommand -anchor w
+        pack $WDInput.options.text $WDInput.options.maxflow \
+            $WDInput.options.mincflow -side top -fill x
+
+        label $WDInput.frame.sourceText -text "Source Node:" -anchor w
+        grid $WDInput.frame.sourceText -in $WDInput.frame -row 0 -column 0 \
+            -rowspan 1 -columnspan 1 -sticky news -padx 1m
+        entry $WDInput.frame.source -textvariable goblinSource -bg white -width 5
+        grid $WDInput.frame.source -in $WDInput.frame -row 0 -column 1 \
+            -rowspan 1 -columnspan 1 -sticky news -padx 1m
+
+        grid columnconfig $WDInput.frame 0 -weight 1 -minsize 0
+        grid columnconfig $WDInput.frame 1 -weight 1 -minsize 0
+
+        bind $WDInput.frame.source <Return> {eval $GoCommand}
+    }
+
+    global WD
+    focus $WD(BalancedNetworkFlows).frame.source
+}
+
+proc SourceOptLevel {} {
+    global GoblinTclPath
+    source [file join $GoblinTclPath optimizeLevel.tk]
+}
+
+proc SourceMethOpt {} {
+    global GoblinTclPath
+    source [file join $GoblinTclPath optimizeMethods.tk]
+}
+
+proc SourceDataOpt {} {
+    global GoblinTclPath
+    source [file join $GoblinTclPath optimizeDataStruct.tk]
+}
+
+bind . <Control-c> {StartOrStop}
+bind . <Control-M> {SourceMethOpt}
+bind . <Control-O> {SourceOptLevel}
+bind . <Control-S> {SourceDataOpt}

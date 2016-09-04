@@ -1,0 +1,503 @@
+
+#-------------------------------------------------------------------------------
+# Module:     menuCompose.tk
+# Activation: Loaded during GOBLET startup
+# Scope:      Compose menu item, bindings, some small dialogs
+#-------------------------------------------------------------------------------
+
+
+
+proc MakeComposeMenu {} {
+    global ThisGraph
+
+    destroy .mbar.compose.menu
+
+    menu .mbar.compose.menu -tearoff false
+
+    if {[$ThisGraph is mip]} {
+        .mbar.compose.menu add command -label "Standard Form" -underline 0 \
+            -command {SaveAndCompose standard}
+        .mbar.compose.menu add command -label "Canonical Form" -underline 0 \
+            -command {SaveAndCompose canonical}
+        .mbar.compose.menu add command -label "Dual Form" -underline 0 \
+            -command {SaveAndCompose dual}
+        return
+    }
+
+    .mbar.compose.menu add command -label "Underlying Graph" -underline 0 \
+        -command "SaveAndCompose underlying"
+
+    menu .mbar.compose.menu.orientation -tearoff false
+    .mbar.compose.menu add cascade -label "Orientation" -underline 0 \
+        -menu .mbar.compose.menu.orientation
+    .mbar.compose.menu.orientation add command -label "Complete" \
+        -underline 0 -command {SaveAndCompose orientation}
+    .mbar.compose.menu.orientation add command -label "Induced By Colours" \
+        -underline 0 -command SaveAndInducedOrientation
+
+    .mbar.compose.menu add command -label "Shrink Colours" -underline 7 \
+        -command {SaveAndCompose contraction}
+
+    menu .mbar.compose.menu.subgraph -tearoff false
+    .mbar.compose.menu add cascade -label "Subgraph" -underline 0 \
+        -menu .mbar.compose.menu.subgraph
+    .mbar.compose.menu.subgraph add command -label "By Node Colour..." \
+        -underline 3 \
+        -command SaveAndInducedSubgraph
+    .mbar.compose.menu.subgraph add command -label "By Edge Colour..." \
+        -underline 8 \
+        -command SaveAndInducedColour
+    .mbar.compose.menu.subgraph add command -label "Induced Bigraph..." \
+        -underline 8 -command SaveAndInducedBigraph
+
+    if {[$ThisGraph is undirected] || [$ThisGraph is directed]} {
+        .mbar.compose.menu.subgraph add command -label "Explicit Subgraph" \
+            -underline 0 -command {SaveAndCompose subgraph}
+    }
+
+    if {[$ThisGraph is directed]} {
+        .mbar.compose.menu.subgraph add command -label "Transitive Closure" \
+            -underline 0 -command {SaveAndCompose transitive}
+        .mbar.compose.menu.subgraph add command -label "Intransitive Reduction" \
+            -underline 13 -command {SaveAndCompose intransitive}
+    }
+
+
+    .mbar.compose.menu add command -label "Complement" -underline 0 \
+        -command {SaveAndCompose complement}
+    .mbar.compose.menu add command -label "Line Graph" -underline 0 \
+        -command {SaveAndCompose "linegraph -directed"}
+    .mbar.compose.menu add command -label "Node Splitting" -underline 0 \
+        -command {SaveAndCompose nodesplitting}
+    .mbar.compose.menu add command -label "Subdivision" -underline 0 \
+        -command {SaveAndCompose subdivision}
+    .mbar.compose.menu add command -label "Distance Graph" -underline 9 \
+        -command {
+            set goblinSubgraph 1
+            SaveAndCompose distances
+        }
+
+    if {[$ThisGraph is sparse]} {
+        menu .mbar.compose.menu.planar -tearoff false
+        .mbar.compose.menu add cascade -label "Planar" -underline 0 \
+            -menu .mbar.compose.menu.planar
+        .mbar.compose.menu.planar add command -label "Undirected Dual Graph" \
+            -underline 0 -command {SaveAndCompose dualgraph}
+        .mbar.compose.menu.planar add command -label "Directed Dual Graph" \
+            -underline 0 -command {SaveAndCompose "dualgraph -directed"}
+        .mbar.compose.menu.planar add command -label "Planar Line Graph" \
+            -underline 0 -command {SaveAndCompose "linegraph -planar"}
+        .mbar.compose.menu.planar add command -label "Truncate Vertices" \
+            -underline 0 -command {SaveAndCompose truncate}
+        .mbar.compose.menu.planar add command -label "Tear Regions Apart" \
+            -underline 0 -command {SaveAndCompose separate}
+        .mbar.compose.menu.planar add command -label "Tear & Turn Left" \
+            -underline 0 -command {SaveAndCompose "separate -turnLeft"}
+        .mbar.compose.menu.planar add command -label "Tear & Turn Right" \
+            -underline 0 -command {SaveAndCompose "separate -turnRight"}
+        .mbar.compose.menu.planar add command -label "Spread To Outerplanar" \
+            -underline 0 -command {SaveAndCompose spread}
+    }
+
+    if {[$ThisGraph is undirected]} {
+        .mbar.compose.menu add separator
+        .mbar.compose.menu add command -label "Metric Graph" -underline 0 \
+            -command {
+                set goblinSubgraph 1
+                SaveAndCompose metricGraph
+            }
+        .mbar.compose.menu add command -label "Tiling..." -underline 0 \
+            -command SaveAndTiling
+    }
+
+    if {[$ThisGraph is directed]} {
+        .mbar.compose.menu add separator
+        .mbar.compose.menu add command -label "Split Graph..." -underline 0 \
+            -command SaveAndSplitGraph
+    }
+
+    menu .mbar.compose.menu.mip -tearoff false
+    .mbar.compose.menu add cascade -label "Integer / Linear" -underline 1 \
+        -menu .mbar.compose.menu.mip
+    .mbar.compose.menu.mip add command -label "Stable Set Problem" \
+        -underline 0 -command {SaveAndCompose ilpstable}
+
+    if {[$ThisGraph is directed]} {
+        .mbar.compose.menu.mip add command -label "b-Flow Problem" \
+            -underline 0 -command {SaveAndCompose lpflow}
+    }
+}
+
+proc SaveAndCompose {option} {
+    global Unchanged GoblinTclPath PromptCommand
+
+    set PromptCommand "Compose $option"
+    source [file join $GoblinTclPath fileChanges.tk]
+}
+
+proc Compose {option {option2 {default}}} {
+    global ThisGraph OrigFileName FileName Log TraceDir
+
+    if {[string equal $ThisGraph "GOB1"]} {
+        if {($option2=="default" && [catch [$ThisGraph $option GOB2] result]) ||
+            ($option2!="default" && [catch [$ThisGraph $option $option2 GOB2] result])
+        } {
+            AcknowledgementMessage $result
+            ViewMessenger
+            return
+        } else {
+            $ThisGraph delete
+            set ThisGraph GOB2
+        }
+    } else {
+        if {($option2=="default" && [catch [$ThisGraph $option GOB1] result]) ||
+        ($option2!="default" && [catch [$ThisGraph $option $option2 GOB1] result])
+    } {
+            AcknowledgementMessage $result
+            ViewMessenger
+            return
+        } else {
+            $ThisGraph delete
+            set ThisGraph GOB1
+        }
+    }
+
+    DeleteTempFiles
+    set OrigFileName [file join [pwd] unnamed]
+    set FileName [file join $TraceDir unnamed]
+    InitFile
+
+    if {[info exists Log] && [winfo exists $Log]} {ViewMessenger}
+}
+
+proc SaveAndInducedOrientation {} {
+    global Unchanged GoblinTclPath PromptCommand
+    set PromptCommand "Compose induced orientation"
+    source [file join $GoblinTclPath fileChanges.tk]
+}
+
+proc SaveAndInducedSubgraph {} {
+    global Unchanged GoblinTclPath PromptCommand
+    set PromptCommand "InducedSubgraph"
+    source [file join $GoblinTclPath fileChanges.tk]
+}
+
+proc InducedSubgraph {} {
+    global ThisGraph FileName ThisC GoCommand UploadCommand WDInput TraceDir
+
+    if {![info exists ThisC]} {set ThisC 0}
+
+    set GoCommand {
+        set found 0
+        for {set i 0} {!$found && $i<[$ThisGraph #nodes]} {incr i} {
+            if {[$ThisGraph node $i colour]==$ThisC} {set found 1}
+        }
+
+        if {$found && [QualifiedInt $ThisC 0 [$ThisGraph #nodes]]} {
+            DestroyFormOrWindow "Induced Subgraph" $WDInput
+
+            if {[string equal $ThisGraph "GOB1"]} {
+                $ThisGraph induced subgraph GOB2 $ThisC
+                $ThisGraph delete
+                set ThisGraph GOB2
+            } else {
+                $ThisGraph induced subgraph GOB1 $ThisC
+                $ThisGraph delete
+                set ThisGraph GOB1
+            }
+
+            DeleteTempFiles
+            set OrigFileName [file join [pwd] unnamed]
+            set FileName [file join $TraceDir unnamed]
+            InitFile
+            PropagateModifications
+        } else {
+            PostStatusInfo "inappropriate colour index"
+        }
+    }
+    set UploadCommand {}
+
+    DisplayInputDialog "Induced Subgraph" InducedSubgraph "Compose" "Cancel" {
+        label $WDInput.frame.colText -text "Colour Index:          " -anchor w
+        grid $WDInput.frame.colText -in $WDInput.frame -row 0 -column 0 \
+            -rowspan 1 -columnspan 1 -sticky news -padx 1m -pady 1m
+        entry $WDInput.frame.col -textvariable ThisC -bg white -width 5
+        grid $WDInput.frame.col -in $WDInput.frame -row 0 -column 1 \
+            -rowspan 1 -columnspan 1 -sticky news -padx 1m -pady 1m
+
+        grid columnconfig $WDInput.frame 0 -weight 1 -minsize 0
+        grid columnconfig $WDInput.frame 1 -weight 1 -minsize 0
+
+        bind $WDInput.frame.col <Return> $GoCommand
+    }
+
+    global WD
+    focus $WD(InducedSubgraph).frame.col
+}
+
+proc SaveAndInducedColour {} {
+    global Unchanged GoblinTclPath PromptCommand
+    set PromptCommand "InducedColour"
+    source [file join $GoblinTclPath fileChanges.tk]
+}
+
+proc InducedColour {} {
+    global ThisGraph FileName ThisC GoCommand UploadCommand WDInput TraceDir
+
+    if {![info exists ThisC]} {set ThisC 0}
+
+    set GoCommand {
+        set found 0
+        for {set i 0} {!$found && $i<[$ThisGraph #arcs]} {incr i} {
+            if {[$ThisGraph arc $i colour]==$ThisC} {set found 1}
+        }
+
+        if {$found && [QualifiedInt $ThisC 0 [$ThisGraph #arcs]]} {
+            DestroyFormOrWindow "Induced Edge Colour" $WDInput
+
+            if {[string equal $ThisGraph "GOB1"]} {
+                $ThisGraph induced colour GOB2 $ThisC
+                $ThisGraph delete
+                set ThisGraph GOB2
+            } else {
+                $ThisGraph induced colour GOB1 $ThisC
+                $ThisGraph delete
+                set ThisGraph GOB1
+            }
+
+            DeleteTempFiles
+            set OrigFileName [file join [pwd] unnamed]
+            set FileName [file join $TraceDir unnamed]
+            InitFile
+            PropagateModifications
+        } else {
+            PostStatusInfo "inappropriate colour index"
+        }
+    }
+    set UploadCommand {}
+
+    DisplayInputDialog "Induced Edge Colour" InducedColour "Compose" "Cancel" {
+        label $WDInput.frame.colText -text "Colour Index:          " -anchor w
+        grid $WDInput.frame.colText -in $WDInput.frame -row 0 -column 0 \
+            -rowspan 1 -columnspan 1 -sticky news -padx 1m -pady 1m
+        entry $WDInput.frame.col -textvariable ThisC -bg white -width 5
+        grid $WDInput.frame.col -in $WDInput.frame -row 0 -column 1 \
+            -rowspan 1 -columnspan 1 -sticky news -padx 1m -pady 1m
+
+        grid columnconfig $WDInput.frame 0 -weight 1 -minsize 0
+        grid columnconfig $WDInput.frame 1 -weight 1 -minsize 0
+
+        bind $WDInput.frame.col <Return> $GoCommand
+    }
+
+    global WD
+    focus $WD(InducedColour).frame.col
+}
+
+proc SaveAndInducedBigraph {} {
+    global Unchanged GoblinTclPath PromptCommand
+    set PromptCommand "InducedBigraph"
+    source [file join $GoblinTclPath fileChanges.tk]
+}
+
+proc InducedBigraph {} {
+    global ThisGraph ThisX ThisY GoCommand UploadCommand WDInput
+
+    if {![info exists ThisX]} {set ThisX 0}
+    if {![info exists ThisY]} {set ThisY 1}
+
+    set GoCommand {
+        set found1 0
+        for {set i 0} {!$found1 && $i<[$ThisGraph #nodes]} {incr i} {
+            if {[$ThisGraph node $i colour]==$ThisX} {set found1 1}
+        }
+
+        set found2 0
+        for {set i 0} {!$found2 && $i<[$ThisGraph #nodes]} {incr i} {
+            if {[$ThisGraph node $i colour]==$ThisY} {set found2 1}
+        }
+
+        if {$found1 && $found2 && \
+                [QualifiedInt $ThisX 0 [$ThisGraph #nodes]] && \
+                [QualifiedInt $ThisY 0 [$ThisGraph #nodes]]} {
+            DestroyFormOrWindow "Induced Bigraph" $WDInput
+
+            if {[string equal $ThisGraph "GOB1"]} {
+                $ThisGraph induced bigraph GOB2 $ThisX $ThisY
+                $ThisGraph delete
+                set ThisGraph GOB2
+            } else {
+                $ThisGraph induced bigraph GOB1 $ThisX $ThisY
+                $ThisGraph delete
+                set ThisGraph GOB1
+            }
+
+            DeleteTempFiles
+
+            global OrigFileName FileName TraceDir
+            set OrigFileName [file join [pwd] unnamed]
+            set FileName [file join $TraceDir unnamed]
+
+            InitFile
+            PropagateModifications
+        } else {
+            PostStatusInfo "inappropriate colour index"
+        }
+    }
+    set UploadCommand {}
+
+    DisplayInputDialog "Induced Bigraph" "InducedBigraph" "Compose" "Cancel" {
+        label $WDInput.frame.colText -text "First Colour Index: " -anchor w
+        grid $WDInput.frame.colText -in $WDInput.frame -row 0 -column 0 \
+            -rowspan 1 -columnspan 1 -sticky news -padx 1m -pady 1m
+        entry $WDInput.frame.col -textvariable ThisX -bg white -width 5
+        grid $WDInput.frame.col -in $WDInput.frame -row 0 -column 1 \
+            -rowspan 1 -columnspan 1 -sticky news -padx 1m -pady 1m
+
+        label $WDInput.frame.rowText -text "2nd Colour Index:  " -anchor w
+        grid $WDInput.frame.rowText -in $WDInput.frame -row 1 -column 0 \
+            -rowspan 1 -columnspan 1 -sticky news -padx 1m -pady 1m
+        entry $WDInput.frame.row -textvariable ThisY -bg white -width 5
+        grid $WDInput.frame.row -in $WDInput.frame -row 1 -column 1 \
+            -rowspan 1 -columnspan 1 -sticky news -padx 1m -pady 1m
+
+        grid columnconfig $WDInput.frame 0 -weight 1 -minsize 0
+        grid columnconfig $WDInput.frame 1 -weight 1 -minsize 0
+
+        bind $WDInput.frame.col <Return> {focus $WDInput.frame.row}
+        bind $WDInput.frame.row <Return> $GoCommand
+    }
+
+    global WD
+    focus $WD(InducedBigraph).frame.col
+}
+
+proc SaveAndTiling {} {
+    global Unchanged GoblinTclPath PromptCommand
+    set PromptCommand "Tiling"
+    source [file join $GoblinTclPath fileChanges.tk]
+}
+
+proc Tiling {} {
+    global ThisGraph ThisX ThisY GoCommand UploadCommand WDInput
+
+    set ThisX 1
+    set ThisY 1
+
+    set GoCommand {
+        if {[QualifiedInt $ThisX 1 50000] && [QualifiedInt $ThisY 1 50000]} {
+            DestroyFormOrWindow "Tiling" $WDInput
+
+            if {[string equal $ThisGraph "GOB1"]} {
+                $ThisGraph tiling GOB2 $ThisX $ThisY
+                $ThisGraph delete
+                set ThisGraph GOB2
+            } else {
+                $ThisGraph tiling GOB1 $ThisX $ThisY
+                $ThisGraph delete
+                set ThisGraph GOB1
+            }
+
+            DeleteTempFiles
+
+            global OrigFileName FileName TraceDir
+            set OrigFileName [file join [pwd] unnamed]
+            set FileName [file join $TraceDir unnamed]
+
+            InitFile
+            PropagateModifications
+        }
+    }
+    set UploadCommand {}
+
+    DisplayInputDialog "Tiling" "Tiling" "Compose" "Cancel" {
+        label $WDInput.frame.colText -text "Number of columns:" -anchor w
+        grid $WDInput.frame.colText -in $WDInput.frame -row 0 -column 0 \
+            -rowspan 1 -columnspan 1 -sticky news -padx 1m -pady 1m
+        entry $WDInput.frame.col -textvariable ThisX -bg white -width 5
+        grid $WDInput.frame.col -in $WDInput.frame -row 0 -column 1 \
+            -rowspan 1 -columnspan 1 -sticky news -padx 1m -pady 1m
+
+        label $WDInput.frame.rowText -text "Number of rows:" -anchor w
+        grid $WDInput.frame.rowText -in $WDInput.frame -row 1 -column 0 \
+            -rowspan 1 -columnspan 1 -sticky news -padx 1m -pady 1m
+        entry $WDInput.frame.row -textvariable ThisY -bg white -width 5
+        grid $WDInput.frame.row -in $WDInput.frame -row 1 -column 1 \
+            -rowspan 1 -columnspan 1 -sticky news -padx 1m -pady 1m
+
+        grid columnconfig $WDInput.frame 0 -weight 1 -minsize 0
+        grid columnconfig $WDInput.frame 1 -weight 1 -minsize 0
+
+        bind $WDInput.frame.col <Return> {focus $WDInput.frame.row}
+        bind $WDInput.frame.row <Return> $GoCommand
+    }
+
+    global WD
+    focus $WD(Tiling).frame.col
+}
+
+proc SaveAndSplitGraph {} {
+    global Unchanged GoblinTclPath PromptCommand
+    set PromptCommand "SplitGraph"
+    source [file join $GoblinTclPath fileChanges.tk]
+}
+
+proc SplitGraph {} {
+    global ThisGraph goblinSource goblinTarget GoCommand UploadCommand WDInput
+
+    set goblinSource [$ThisGraph source]
+    set goblinTarget [$ThisGraph target]
+
+    set GoCommand {
+        if {![QualifiedNode $goblinSource] || ![QualifiedNode $goblinTarget]} {
+            return
+        }
+
+        DestroyFormOrWindow "Split Graph" $WDInput
+
+        if {[string equal $ThisGraph "GOB1"]} {
+            $ThisGraph splitgraph GOB2 $goblinSource $goblinTarget
+            $ThisGraph delete
+            set ThisGraph GOB2
+        } else {
+            $ThisGraph splitgraph GOB1 $goblinSource $goblinTarget
+            $ThisGraph delete
+            set ThisGraph GOB1
+        }
+
+        DeleteTempFiles
+
+        global OrigFileName FileName TraceDir
+        set OrigFileName [file join [pwd] unnamed]
+        set FileName [file join $TraceDir unnamed]
+
+        InitFile
+        PropagateModifications
+    }
+    set UploadCommand {}
+
+    DisplayInputDialog "Split Graph" "SplitGraph" "Compose" "Cancel" {
+        label $WDInput.frame.sourceText -text "Source Node:" -anchor w
+        grid $WDInput.frame.sourceText -in $WDInput.frame -row 0 -column 0 \
+            -rowspan 1 -columnspan 1 -sticky news -padx 1m -pady 1m
+        entry $WDInput.frame.source -textvariable goblinSource -bg white -width 5
+        grid $WDInput.frame.source -in $WDInput.frame -row 0 -column 1 \
+            -rowspan 1 -columnspan 1 -sticky news -padx 1m -pady 1m
+
+        label $WDInput.frame.targetText -text "Target Node:" -anchor w
+        grid $WDInput.frame.targetText -in $WDInput.frame -row 1 -column 0 \
+            -rowspan 1 -columnspan 1 -sticky news -padx 1m -pady 1m
+        entry $WDInput.frame.target -textvariable goblinTarget -bg white -width 5
+        grid $WDInput.frame.target -in $WDInput.frame -row 1 -column 1 \
+            -rowspan 1 -columnspan 1 -sticky news -padx 1m -pady 1m
+
+        grid columnconfig $WDInput.frame 0 -weight 1 -minsize 0
+        grid columnconfig $WDInput.frame 1 -weight 1 -minsize 0
+
+        bind $WDInput.frame.source <Return> {focus $WDInput.frame.target}
+        bind $WDInput.frame.target <Return> $GoCommand
+    }
+
+    global WD
+    focus $WD(SplitGraph).frame.source
+}

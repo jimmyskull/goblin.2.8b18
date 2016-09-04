@@ -1,0 +1,530 @@
+
+#-------------------------------------------------------------------------------
+# Module:     mainMessenger.tk
+# Activation: Loaded during GOBLET startup
+# Scope:      Display structured logging information
+#             Searching a logfile
+#             Logfile upload from GOBLIN messenger
+#-------------------------------------------------------------------------------
+
+
+
+# Data Initialization
+
+set LogSearchMode 0
+set LogSearchDir 0
+set LogSearchString "-nocase"
+set LogSelection ""
+
+
+proc ViewMessenger {} {
+    global InternalWindowing Log CanvasRegion GoblinTclPath \
+        LogFile LogView LogText LogXScroll LogYScroll LogBar
+
+    if {![info exists Log] || ![winfo exists $Log] || ![winfo exists $CanvasRegion]} {
+        if {!$InternalWindowing && [winfo exists $CanvasRegion]} {
+            set Log .log
+            destroy $Log
+            toplevel $Log
+            wm title $Log "GOBLIN Messenger"
+            wm protocol $Log WM_DELETE_WINDOW DestroyLogFile
+        } else {
+            global Workspace InternalLog CanvasRegion DialogRegion \
+                BrowserBalance DialogBalance
+            destroy .log
+            set Log $InternalLog
+            destroy $InternalLog
+            frame $Log
+            if {[winfo exists $CanvasRegion] || [winfo exists $DialogRegion]} {
+                SplitWorkspace
+            } else {
+                pack $Log -side top -fill both -expand yes -padx 1m -pady 1m
+            }
+        }
+
+        set dummyFrame $Log.dummyFrame
+        frame $dummyFrame -relief raised -borderwidth 1
+        pack $dummyFrame -side left -fill y
+
+        set LogBar $dummyFrame.bar
+        frame $LogBar
+        pack $LogBar -side top -anchor n
+
+        set LogView $Log.view
+        frame $LogView
+        pack $LogView -side top -fill both -expand yes
+
+        set LogText $LogView.text
+        set LogXScroll $LogView.xscroll
+        set LogYScroll $LogView.yscroll
+        set LogDelete $LogView.delete
+        text $LogText -bg ivory  -font {courier 12} \
+            -padx 2m -pady 2m -takefocus 1 \
+            -relief sunken -borderwidth 2 -wrap none \
+            -xscrollcommand "$LogXScroll set" \
+            -yscrollcommand "$LogYScroll set"
+            
+        bind $LogText <Control-f> SearchLogFile
+        bind $LogText <Button-1> {focus $LogText}
+        bind $LogBar <Configure> {}
+
+        $LogText see end
+        $LogText tag configure tag0 -foreground red -font {courier 12 bold}
+        $LogText tag configure tag1 -foreground red -font {courier 12 bold}
+        $LogText tag configure tag2 -foreground red -font {courier 12 bold}
+        $LogText tag configure tag3 -foreground red -font {courier 12 bold}
+        $LogText tag configure tag4 -foreground red -font {courier 12 bold}
+        $LogText tag configure tag5 -foreground red -font {courier 12 bold}
+        $LogText tag configure tag7 -foreground red3
+        $LogText tag configure tag8 -foreground blue
+        $LogText tag configure tag9 -foreground blue
+        $LogText tag configure tag10 -foreground brown3 -font {courier 12 bold}
+        $LogText tag configure tag11 -foreground brown3 -font {courier 12 bold}
+        $LogText tag configure tag12 -foreground magenta3 -font {courier 12 bold}
+        $LogText tag configure tag13 -foreground darkGrey -font {courier 12 bold}
+        $LogText tag configure tag14 -foreground darkGrey -font {courier 12 bold}
+        $LogText tag configure tag15 -foreground darkGrey -font {courier 12 bold}
+        $LogText tag configure tag16 -foreground green4 -font {courier 12 bold}
+        $LogText tag configure tag17 -foreground darkGreen
+        $LogText tag configure tag18 -foreground blue3 -font {courier 12 bold}
+        $LogText tag configure tag19 -foreground blue2 -font {courier 12}
+        $LogText tag configure tag20 -foreground blue
+        $LogText tag configure tag21 -foreground blue
+        $LogText tag configure tag22 -foreground black -font {courier 12 bold}
+        $LogText tag configure tag23 -foreground steelBlue -font {courier 12 bold}
+        $LogText tag configure tag24 -foreground dodgerBlue4 -font {courier 12 bold}
+
+        for {set i 0} {$i<[goblin #modules]} {incr i} {
+            $LogText tag bind mod$i <Button-3> [format { \
+                global ThisModule
+                set ThisModule %1$s
+                MessengerContextMenu [winfo pointerx $LogText] \
+                    [winfo pointery $LogText]} $i]
+        }
+
+        scrollbar $LogXScroll -orient horiz -command "$LogText xview" -width 3.5m
+        scrollbar $LogYScroll -command "$LogText yview" -width 3.5m
+        button $LogDelete -command DestroyLogFile -padx 0 -pady 0 -image del_button 
+
+        grid $LogText -in $LogView \
+            -row 0 -column 0 -rowspan 1 -columnspan 1 -sticky news
+        grid $LogXScroll \
+            -row 1 -column 0 -rowspan 1 -columnspan 1 -sticky news
+        grid $LogYScroll \
+            -row 0 -column 1 -rowspan 1 -columnspan 1 -sticky news
+        grid $LogDelete \
+            -row 1 -column 1 -rowspan 1 -columnspan 1 -sticky news
+        grid rowconfig    $LogView 0 -weight 1 -minsize 0
+        grid columnconfig $LogView 0 -weight 1 -minsize 0
+
+        LoadLogFile
+        MakeLogBar
+    } else {
+        LoadLogFile
+        $LogText see end
+        MakeLogBar
+    }
+}
+
+proc MessengerContextMenu {x y} {
+    global ThisModule
+
+    destroy .contextMenu
+    menu .contextMenu -tearoff false
+
+    .contextMenu add command -label "Show Module Info" \
+        -command {
+            destroy .contextMenu
+            source [file join $GoblinTclPath infoModules.tk]
+        }
+
+    .contextMenu add command -label "Show Timer" \
+        -command {
+            destroy .contextMenu
+            set ThisTimer [goblin module $ThisModule timer]
+            source [file join $GoblinTclPath infoTimers.tk]
+            ShowTimers
+        }
+
+    set tmpRef [goblin module $ThisModule implementor1]
+
+    if {$tmpRef!=[goblin #authors]} {
+        .contextMenu add command -label "Show Main Author" \
+            -command {
+                destroy .contextMenu
+                set ThisAuthor [goblin module $ThisModule implementor1]
+                source [file join $GoblinTclPath infoAuthors.tk]
+                ShowAuthors
+            }
+    }
+
+    set tmpRef [goblin module $ThisModule original_reference]
+
+    if {$tmpRef!=[goblin #references]} {
+        .contextMenu add command -label "Show Bibliography" \
+            -command {
+                destroy .contextMenu
+                set ThisReference [goblin module $ThisModule original_reference]
+                source [file join $GoblinTclPath infoBibliography.tk]
+                ShowBibliography
+            }
+    }
+
+    tk_popup .contextMenu $x $y
+}
+
+
+image create photo log_first -file [file join $GoblinTclPath logFirst.gif]
+image create photo log_prev -file [file join $GoblinTclPath logPrev.gif]
+image create photo log_next -file [file join $GoblinTclPath logNext.gif]
+image create photo log_last -file [file join $GoblinTclPath logLast.gif]
+image create photo log_search -file [file join $GoblinTclPath logSearch.gif]
+image create photo log_see -file [file join $GoblinTclPath logSee.gif]
+
+proc MakeLogBar {} {
+    global Log LogBar
+
+    if {![winfo ismapped $LogBar]} {
+        if {[catch {tkwait visibility $LogBar}]!=0} {
+            # Do not complain if the window is destroyed before it can be mapped
+            return
+        }
+    }
+    set height [winfo height $Log]
+
+    MakeArrowUp LogBar $LogBar.up $height 5
+
+    MakeIcon LogBar $LogBar.search log_search SearchLogFile \
+        {search messages} $height 1 5
+
+    MakeIcon LogBar $LogBar.first log_first LogFindFirst \
+        {find first} $height 2 5
+
+    MakeIcon LogBar $LogBar.prev log_prev LogFindPrev \
+        {find previous} $height 3 5
+
+    MakeIcon LogBar $LogBar.next log_next LogFindNext \
+        {find next} $height 4 5
+
+    MakeIcon LogBar $LogBar.last log_last LogFindLast \
+        {find last} $height 5 5
+
+    MakeArrowDown LogBar $LogBar.down $height 5
+
+    bind $Log.dummyFrame <Configure> MakeLogBar
+}
+
+
+# image create photo msg_stop -file [file join $GoblinTclPath msgStop.gif]
+# image create photo msg_warn -file [file join $GoblinTclPath msgWarn.gif]
+# image create photo open_fold -file [file join $GoblinTclPath openFold.t.gif]
+# image create photo close_fold -file [file join $GoblinTclPath closeFold.t.gif]
+
+proc LoadLogFile {} {
+    global LogStream LogText LogFile GoblinTclPath StartCompleted
+
+    if {!$StartCompleted} {return}
+    
+    if [catch {open "| cat < \"$LogFile\""} LogStream] {
+        AcknowledgementMessage "Could not open logfile"
+        return
+    }
+    
+    $LogText configure -state normal
+    $LogText delete 1.0 end
+
+    while {[gets $LogStream thisLine]>=0} {
+        set ret [scan $thisLine {%d %d %d %d} thisClass thisModule thisObj thisDepth]
+        if {$ret==1} {
+            set ret [scan $thisLine {%d %d * %d} thisClass thisModule thisDepth]
+            set thisObj "*"
+        }
+        
+        if {$ret>0} {
+            # if {$thisClass<6} {
+            #     $LogText image create end -image msg_stop -pady 3
+            # }
+            # if {$thisClass==7} {
+            #     $LogText image create end -image msg_warn -pady 3
+            # }
+            $LogText insert end "[string range $thisLine 21 end]\n" \
+                [list tag$thisClass mod$thisModule]
+        } else {
+            $LogText insert end "\n"
+        }
+    }
+
+    close $LogStream
+    $LogText see "insert linestart"
+    $LogText configure -state disabled
+}
+
+
+proc UploadMessages {} {
+    global LogText OldClass
+
+    goblin messenger reset
+    $LogText configure -state normal
+    $LogText delete 1.0 end
+    set OldClass 22
+    
+    if {[goblin messenger void]} {return}
+
+    $LogText see "end linestart"
+    $LogText mark set insert end
+    $LogText delete "insert linestart" end
+
+    set scanning 1
+    while {$scanning==1} {
+        set thisText   [goblin messenger text]
+        set thisClass  [goblin messenger class]
+        set thisHandle [goblin messenger handle]
+        set thisLevel  [goblin messenger level]
+        
+        if {$thisClass!=6} {
+            # if {$thisClass<6} {
+            #     $LogText image create end -image msg_stop -pady 3
+            # }
+            # if {$thisClass==7} {
+            #     $LogText image create end -image msg_warn -pady 3
+            # }
+            $LogText insert end "\n[string repeat "  " $thisLevel]" tag19
+            $LogText insert end $thisText tag$thisClass
+            set OldClass $thisClass
+        } else {
+            $LogText insert end $thisText tag$OldClass
+        }
+        
+        if {![goblin messenger eof]} {
+            goblin messenger skip
+        } else {
+            set scanning 0
+        }
+    }
+    
+    $LogText see "insert linestart"
+    $LogText configure -state disabled
+}
+
+
+proc SearchLogFile {} {
+    global LogStream Log LogSelection GoCommand UploadCommand LogSearchMode \
+        LogSearchDir LogSearchString
+    
+    catch [set LogSelection [selection get]]
+
+    set GoCommand {
+        switch $LogSearchMode {
+            0 {set LogSearchString "-nocase"}
+            1 {set LogSearchString "-exact"}
+            2 {set LogSearchString "-regexp"}
+        }
+        
+        if {$LogSearchDir==0} {
+            LogFindNext
+        } else {
+            LogFindPrev
+        }
+    }
+
+    set UploadCommand {
+        switch $LogSearchMode {
+            0 {set $LogSearchString "-nocase"}
+            1 {set $LogSearchString "-exact"}
+            2 {set $LogSearchString "-regexp"}
+        }
+    }
+
+    DisplayInputDialog "Find in Messages" "SearchLogFile" "Search" "Done" {
+        global GoblinVersion LogSearchDir LogSearchMode LogSelection LogSearchMode
+    
+        label $WDInput.frame.text -text "Search string:" -anchor w
+        entry $WDInput.frame.entry -textvariable LogSelection -bg white -width 25
+        pack $WDInput.frame.text $WDInput.frame.entry -side left -padx 1m \
+            -fill x -expand 1
+        bind $WDInput.frame.entry <Return> {
+            eval $UploadCommand
+            if {$InternalWindowing} {
+                DestroyForm "Find in Messages"
+            } else {
+                destroy $WDInput
+            }
+        }
+    
+        frame $WDInput.options
+        label $WDInput.options.label -text "Search" -anchor w
+        grid $WDInput.options.label \
+            -row 0 -column 0 -rowspan 1 -columnspan 1 -sticky w -padx 1m
+        menubutton $WDInput.options.dirSelect \
+            -menu $WDInput.options.dirSelect.menu -anchor w \
+            -text "Forward" -bg white -relief ridge
+        grid $WDInput.options.dirSelect \
+            -row 0 -column 1 -rowspan 1 -columnspan 1 -sticky we -padx 1m
+        menubutton $WDInput.options.modeSelect \
+            -menu $WDInput.options.modeSelect.menu -anchor w \
+            -text "Literally" -bg white -relief ridge
+        grid $WDInput.options.modeSelect \
+            -row 0 -column 2 -rowspan 1 -columnspan 1 -sticky we -padx 1m
+
+        grid columnconfig $WDInput.options 0 -weight 0 -minsize 0
+        grid columnconfig $WDInput.options 1 -weight 1 -minsize 0
+        grid columnconfig $WDInput.options 2 -weight 1 -minsize 0
+        
+        if {$LogSearchDir==1} {
+            $WDInput.options.dirSelect configure -text "Backward"
+        }
+
+        if {$LogSearchMode==1} {
+            $WDInput.options.modeSelect configure -text "Case Sensitive"
+        }
+
+        if {$LogSearchMode==2} {
+            $WDInput.options.modeSelect configure -text "by Regular Expression"
+        }
+
+        menu $WDInput.options.dirSelect.menu -tearoff false
+        $WDInput.options.dirSelect.menu add command \
+            -label "Forward" -command {
+                set LogSearchDir 0
+                $WDInput.options.dirSelect configure -text "Forward"
+            }
+        $WDInput.options.dirSelect.menu add command \
+            -label "Backward" -command {
+                set LogSearchDir 1
+                $WDInput.options.dirSelect configure -text "Backward"
+            }
+
+        menu $WDInput.options.modeSelect.menu -tearoff false
+        $WDInput.options.modeSelect.menu add command \
+            -label "Literally" -command {
+                set LogSearchMode 0
+                $WDInput.options.modeSelect configure -text "Literally"
+            }
+        $WDInput.options.modeSelect.menu add command \
+            -label "Case Sensitive" -command {
+                set LogSearchMode 1
+                $WDInput.options.modeSelect configure -text "Case Sensitive"
+            }
+        $WDInput.options.modeSelect.menu add command \
+            -label "by Regular Expression" -command {
+                set LogSearchMode 2
+                $WDInput.options.modeSelect configure -text "by Regular Expression"
+            }
+
+        pack $WDInput.options -side top -padx $DefPadX \
+            -pady 3m -expand yes -fill x
+
+        focus $WDInput.frame.entry
+    }
+}
+
+proc LogFindNext {} {
+    global LogText LogSelection LogSearchString
+
+    focus $LogText
+
+    if {![info exists LogSelection] || $LogSelection==""} {
+        set lSelTag [$LogText tag ranges sel]
+        if {[llength $lSelTag]==0} {
+            return
+        } else {
+            set LogSelection [$LogText get [lindex $lSelTag 0] [lindex $lSelTag 1]]
+        }
+    }
+
+    set nextOccurence \
+        [$LogText search -forward $LogSearchString $LogSelection "insert +1 chars" end]
+
+    if {$nextOccurence!=""} {
+        $LogText tag remove sel 1.0 end
+        $LogText mark set insert $nextOccurence
+        $LogText tag add sel insert \
+            "insert +[string length $LogSelection] chars"
+        $LogText see insert
+    }
+}
+
+proc LogFindPrev {} {
+    global LogText LogSelection LogSearchString
+
+    focus $LogText
+
+    if {![info exists LogSelection] || $LogSelection==""} {
+        set lSelTag [$LogText tag ranges sel]
+        if {[llength $lSelTag]==0} {
+            return
+        } else {
+            set LogSelection [$LogText get [lindex $lSelTag 0] [lindex $lSelTag 1]]
+           $LogText mark set insert [lindex $lSelTag 0]
+        }
+    }
+
+    set prevOccurence \
+        [$LogText search -backward $LogSearchString $LogSelection "insert -1 chars" 1.0]
+
+    if {$prevOccurence!=""} {
+        $LogText tag remove sel 1.0 end
+        $LogText mark set insert $prevOccurence
+        $LogText tag add sel insert \
+            "insert +[string length $LogSelection] chars"
+        $LogText see insert
+    }
+}
+
+proc LogFindLast {} {
+    global LogText LogSelection LogSearchString
+
+    focus $LogText
+
+    if {![info exists LogSelection] || $LogSelection==""} {
+        set lSelTag [$LogText tag ranges sel]
+        if {[llength $lSelTag]==0} {
+            return
+        } else {
+            set LogSelection [$LogText get [lindex $lSelTag 0] [lindex $lSelTag 1]]
+        }
+    }
+
+    set lastOccurence \
+        [$LogText search -backward $LogSearchString $LogSelection end 1.0]
+
+    if {$lastOccurence!=""} {
+        $LogText tag remove sel 1.0 end
+        $LogText mark set insert $lastOccurence
+        $LogText tag add sel insert \
+            "insert +[string length $LogSelection] chars"
+        $LogText see insert
+    }
+}
+
+proc LogFindFirst {} {
+    global LogText LogSelection LogSearchString
+
+    focus $LogText
+
+    if {![info exists LogSelection] || $LogSelection==""} {
+        set lSelTag [$LogText tag ranges sel]
+        if {[llength $lSelTag]==0} {
+            return
+        } else {
+            set LogSelection [$LogText get [lindex $lSelTag 0] [lindex $lSelTag 1]]
+        }
+    }
+
+    set firstOccurence \
+        [$LogText search -forward $LogSearchString $LogSelection 1.0 end]
+
+    if {$firstOccurence!=""} {
+        $LogText tag remove sel 1.0 end
+        $LogText mark set insert $firstOccurence
+        $LogText tag add sel insert \
+            "insert +[string length $LogSelection] chars"
+        $LogText see insert
+    }
+}
+
+proc DestroyLogFile {} {
+    global Log
+    destroy $Log
+    InitDisplay
+}

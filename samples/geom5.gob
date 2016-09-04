@@ -1,0 +1,47 @@
+(dense_graph
+ (definition
+  (nodes 20 20 0)
+  (ucap 1)
+  (lcap 0)
+  (demand 2)
+  (directed 0)
+ )
+ (objectives
+  (commodities 1)
+  (bound *)
+  (length
+   (comm0 1)
+  )
+ )
+ (geometry
+  (metrics 2)
+  (dim 2)
+  (coordinates
+   (axis0
+      0 10 20 30 40  0 10 20 30 40
+      0 10 20 30 40  0 10 20 30 40)
+   (axis1
+      0  0  0  0  0 10 10 10 10 10
+     20 20 20 20 20 30 30 30 30 30)
+  )
+ )
+ (layout
+  (style 1)
+  (align *)
+  (interpolate *)
+ )
+ (solutions
+  (label *)
+  (predecessor *)
+  (subgraph 0)
+  (potential *)
+  (colour *)
+ )
+ (configure
+   -arcLabels          4
+   -nodeColours        0
+   -subgraph           1
+   -arcStyle           1
+   -traceStep          100
+   -methGeometry       2)
+)

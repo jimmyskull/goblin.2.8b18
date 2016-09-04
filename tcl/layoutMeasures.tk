@@ -1,0 +1,188 @@
+
+#-------------------------------------------------------------------------------
+# Module:     layoutMeasures.tk
+# Activation: Dynamically loaded on user request
+# Scope:      Size and alignment of the parts of graph display
+#-------------------------------------------------------------------------------
+
+
+
+proc ShowLayoutOptions {} {
+    global WDMeasures InternalWindowing DefPadX
+
+    set title "Measures & Alignments"
+
+    if {[RegisterFormOrWindow $title measures WDMeasures ShowLayoutOptions \
+            "Done"          {
+                if {[QualifiedInt $goblinLegenda 0 50000] && \
+                    [QualifiedInt $goblinNodeSize 1 50000] && \
+                    [QualifiedInt $goblinNodeSep 1 50000] && \
+                    [QualifiedInt $goblinArrowSize 1 50000]} {
+                    PropagateModifications
+                } else {return}
+            } \
+            "Apply"         {
+                if {[QualifiedInt $goblinLegenda 0 50000] && \
+                    [QualifiedInt $goblinNodeSize 1 50000] && \
+                    [QualifiedInt $goblinNodeSep 1 50000] && \
+                    [QualifiedInt $goblinArrowSize 1 50000]} {
+                    PropagateModifications
+                }
+            } \
+            ""              {} \
+            ""              {} \
+        ]
+    } {
+        return
+    }
+    
+
+    frame $WDMeasures.frame
+    pack $WDMeasures.frame -fill x -expand 1 -padx $DefPadX -pady 3m \
+        -side left -anchor w
+    
+    label $WDMeasures.frame.x -text "x" -anchor n
+    grid $WDMeasures.frame.x -in $WDMeasures.frame \
+        -row 0 -column 1 -rowspan 1 -columnspan 1 -sticky news -padx 1m
+    label $WDMeasures.frame.y -text "y" -anchor n
+    grid $WDMeasures.frame.y -in $WDMeasures.frame \
+        -row 0 -column 2 -rowspan 1 -columnspan 1 -sticky news -padx 1m
+    
+    label $WDMeasures.frame.zoomText -text "Zoom Factor:" -anchor w
+    grid $WDMeasures.frame.zoomText -in $WDMeasures.frame \
+        -row 1 -column 0 -rowspan 1 -columnspan 1 -sticky news -padx 1m
+    entry $WDMeasures.frame.xZoom -textvariable goblinXZoom -bg white -width 5
+    grid $WDMeasures.frame.xZoom -in $WDMeasures.frame \
+        -row 1 -column 1 -rowspan 1 -columnspan 1 -sticky news -padx 1m
+    entry $WDMeasures.frame.yZoom -textvariable goblinYZoom -bg white -width 5
+    grid $WDMeasures.frame.yZoom -in $WDMeasures.frame \
+        -row 1 -column 2 -rowspan 1 -columnspan 1 -sticky news -padx 1m
+    
+    label $WDMeasures.frame.shiftText -text "Shift:" -anchor w
+    grid $WDMeasures.frame.shiftText -in $WDMeasures.frame \
+        -row 2 -column 0 -rowspan 1 -columnspan 1 -sticky news -padx 1m
+    entry $WDMeasures.frame.xShift -textvariable goblinXShift -bg white -width 5
+    grid $WDMeasures.frame.xShift -in $WDMeasures.frame \
+        -row 2 -column 1 -rowspan 1 -columnspan 1 -sticky news -padx 1m
+    entry $WDMeasures.frame.yShift -textvariable goblinYShift -bg white -width 5
+    grid $WDMeasures.frame.yShift -in $WDMeasures.frame \
+        -row 2 -column 2 -rowspan 1 -columnspan 1 -sticky news -padx 1m
+
+    label $WDMeasures.frame.nodeText -text "Node Size:" -anchor w
+    grid $WDMeasures.frame.nodeText -in $WDMeasures.frame \
+        -row 1 -column 4 -rowspan 1 -columnspan 1 -sticky news -padx 1m
+    entry $WDMeasures.frame.nodeSize -textvariable goblinNodeSize -bg white -width 5
+    grid $WDMeasures.frame.nodeSize -in $WDMeasures.frame \
+        -row 1 -column 5 -rowspan 1 -columnspan 1 -sticky news -padx 1m
+    
+    label $WDMeasures.frame.arrowText -text "Arrow Size:" -anchor w
+    grid $WDMeasures.frame.arrowText -in $WDMeasures.frame \
+        -row 2 -column 4 -rowspan 1 -columnspan 1 -sticky news -padx 1m
+    entry $WDMeasures.frame.arrowSize -textvariable goblinArrowSize -bg white -width 5
+    grid $WDMeasures.frame.arrowSize -in $WDMeasures.frame \
+        -row 2 -column 5 -rowspan 1 -columnspan 1 -sticky news -padx 1m
+	
+    frame $WDMeasures.frame.dummy
+    grid $WDMeasures.frame.dummy -in $WDMeasures.frame \
+        -row 3 -column 3 -rowspan 1 -columnspan 1 -sticky news -padx 20
+
+    label $WDMeasures.frame.sepText2 -text "Node Separator: " -anchor w
+    grid $WDMeasures.frame.sepText2 -in $WDMeasures.frame \
+        -row 3 -column 4 -rowspan 1 -columnspan 1 -sticky news -padx 1m
+    entry $WDMeasures.frame.sepNode -textvariable goblinNodeSep -bg white -width 5
+    grid $WDMeasures.frame.sepNode -in $WDMeasures.frame \
+        -row 3 -column 5 -rowspan 1 -columnspan 1 -sticky news -padx 1m
+
+    label $WDMeasures.frame.legendaText -text "Hide Legenda:" -anchor w
+    grid $WDMeasures.frame.legendaText -in $WDMeasures.frame \
+        -row 4 -column 0 -rowspan 1 -columnspan 1 -sticky news -padx 1m
+    radiobutton $WDMeasures.frame.legenda \
+        -variable goblinLegenda -value 0 -anchor w
+    grid $WDMeasures.frame.legenda -in $WDMeasures.frame \
+        -row 4 -column 1 -rowspan 1 -columnspan 2 -sticky news -padx 1m
+    label $WDMeasures.frame.sepText -text "Display Separator: " -anchor w
+    grid $WDMeasures.frame.sepText -in $WDMeasures.frame \
+        -row 4 -column 4 -rowspan 1 -columnspan 1 -sticky news -padx 1m
+    entry $WDMeasures.frame.sepLegenda -textvariable goblinLegenda -bg white -width 5
+    grid $WDMeasures.frame.sepLegenda -in $WDMeasures.frame \
+        -row 4 -column 5 -rowspan 1 -columnspan 1 -sticky news -padx 1m
+
+    if {$InternalWindowing} {
+        frame $WDMeasures.frame.dummy3
+        grid $WDMeasures.frame.dummy3 -in $WDMeasures.frame \
+            -row 3 -column 0 -rowspan 1 -columnspan 3 -sticky news -pady 2m
+
+        grid $WDMeasures.frame.dummy -in $WDMeasures.frame \
+            -row 4 -column 1 -rowspan 1 -columnspan 1 -sticky news -pady 0m
+
+        grid $WDMeasures.frame.nodeText -in $WDMeasures.frame \
+            -row 5 -column 0 -rowspan 1 -columnspan 1 -sticky news -padx 1m
+        grid $WDMeasures.frame.nodeSize -in $WDMeasures.frame \
+            -row 5 -column 2 -rowspan 1 -columnspan 1 -sticky news -padx 1m
+    
+        grid $WDMeasures.frame.arrowText -in $WDMeasures.frame \
+            -row 6 -column 0 -rowspan 1 -columnspan 1 -sticky news -padx 1m
+        grid $WDMeasures.frame.arrowSize -in $WDMeasures.frame \
+            -row 6 -column 2 -rowspan 1 -columnspan 1 -sticky news -padx 1m
+	
+        grid $WDMeasures.frame.sepText2 -in $WDMeasures.frame \
+            -row 7 -column 0 -rowspan 1 -columnspan 1 -sticky news -padx 1m
+        grid $WDMeasures.frame.sepNode -in $WDMeasures.frame \
+            -row 7 -column 2 -rowspan 1 -columnspan 1 -sticky news -padx 1m
+
+        frame $WDMeasures.frame.dummy2
+        grid $WDMeasures.frame.dummy2 -in $WDMeasures.frame \
+            -row 8 -column 1 -rowspan 1 -columnspan 3 -sticky news -pady 2m
+
+        grid $WDMeasures.frame.legendaText -in $WDMeasures.frame \
+            -row 9 -column 0 -rowspan 1 -columnspan 1 -sticky news -padx 1m
+        grid $WDMeasures.frame.legenda -in $WDMeasures.frame \
+            -row 9 -column 2 -rowspan 1 -columnspan 2 -sticky news -padx 1m
+        grid $WDMeasures.frame.sepText -in $WDMeasures.frame \
+            -row 10 -column 0 -rowspan 1 -columnspan 1 -sticky news -padx 1m
+        grid $WDMeasures.frame.sepLegenda -in $WDMeasures.frame \
+            -row 10 -column 2 -rowspan 1 -columnspan 1 -sticky news -padx 1m
+
+        grid columnconfig $WDMeasures.frame 1 -weight 1 -minsize 0
+        grid columnconfig $WDMeasures.frame 2 -weight 1 -minsize 0
+    }
+
+    grid columnconfig $WDMeasures.frame 0 -weight 1 -minsize 0
+
+
+    bind $WDMeasures.frame.xZoom <Return> {focus $WDMeasures.frame.yZoom}
+    bind $WDMeasures.frame.yZoom <Return> {focus $WDMeasures.frame.xShift}
+    bind $WDMeasures.frame.xShift <Return> {focus $WDMeasures.frame.yShift}
+    bind $WDMeasures.frame.yShift <Return> {focus $WDMeasures.frame.nodeSize}
+    bind $WDMeasures.frame.nodeSize <Return> {
+        if {[QualifiedInt $goblinNodeSize 1 50000]} {
+            focus $WDMeasures.frame.arrowSize
+        }
+    }
+    bind $WDMeasures.frame.arrowSize <Return> {
+        if {[QualifiedInt $goblinArrowSize 1 50000]} {
+            focus $WDMeasures.frame.sepNode
+        }
+    }
+    bind $WDMeasures.frame.sepNode <Return> {
+        if {[QualifiedInt $goblinNodeSep 0 50000]} {
+            focus $WDMeasures.frame.sepLegenda
+        }
+    }
+    bind $WDMeasures.frame.sepLegenda <Return> {
+        if {[QualifiedInt $goblinLegenda 0 50000] && \
+            [QualifiedInt $goblinNodeSize 1 50000] && \
+            [QualifiedInt $goblinNodeSep 1 50000] && \
+            [QualifiedInt $goblinArrowSize 1 50000]} {
+            DestroyFormOrWindow "Measures & Alignments" $WDMeasures
+            PropagateModifications
+        }
+    }
+    
+    focus $WDMeasures.frame.xZoom
+
+
+    DisplayForm $title
+}
+
+ShowLayoutOptions

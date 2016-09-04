@@ -1,0 +1,81 @@
+(balanced_fnw
+ (definition
+  (nodes 16 16 0)
+  (arcs 48)
+  (incidences
+   (0
+     61  0 12 16 37)
+   (1
+     62  3 15 19 38)
+   (2
+     65  4 18 20 41)
+   (3
+     66  7 17 23 42)
+   (4
+     69  8 14 22 45)
+   (5
+     70 11 13 21 46)
+   (6
+     73  2 24 28 49)
+   (7
+     74  1 27 31 50)
+   (8
+     77  6 26 32 53)
+   (9
+     78  5 25 35 54)
+   (10
+     81 10 30 34 57)
+   (11
+     82  9 29 33 58)
+   (12
+     93 63 67 71 75 79 83 88 90)
+   (13
+     94 60 64 68 72 76 80 89 91)
+   (14
+     95 39 43 47 51 55 59 84 86)
+   (15
+     92 36 40 44 48 52 56 85 87)
+  )
+  (ucap
+    1 1 1 1 1 1 1 1 1 1
+    1 1 1 1 1 1 1 1 1 1
+    1 1 1 1 1 1 1 1 1 1
+    0 0 0 0 0 0 0 0 0 0
+    0 0 6 6 6 6 6 6)
+  (lcap 0)
+  (demand 0)
+  (directed 0)
+ )
+ (objectives
+  (commodities 1)
+  (bound *)
+  (length
+   (comm0
+     5 5 4 4 5 5 6 6 7 7
+     4 4 6 6 8 8 7 7 0 0
+     0 0 0 0 0 0 0 0 0 0
+     0 0 0 0 0 0 0 0 0 0
+     0 0 0 0 0 0 0 0)
+  )
+ )
+ (geometry
+  (metrics 0)
+  (dim 0)
+ )
+ (layout
+  (style 0)
+  (align *)
+  (interpolate *)
+ )
+ (solutions
+  (label *)
+  (predecessor *)
+  (subgraph 0)
+  (potential *)
+  (colour *)
+ )
+ (configure
+   -nodeStyle          0
+   -traceLevel         0
+   -traceStep          1)
+)

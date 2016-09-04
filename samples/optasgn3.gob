@@ -1,0 +1,42 @@
+(dense_bigraph
+ (definition
+  (nodes 8 4 0)
+  (ucap 1)
+  (lcap 0)
+  (demand 1)
+  (directed 0)
+ )
+ (objectives
+  (commodities 1)
+  (bound *)
+  (length
+   (0 1)
+  )
+ )
+ (geometry
+  (metrics 2)
+  (dim 2)
+  (coordinates
+   (0
+       0 901 391 106 870 857 119 509)
+   (1
+     468   0 301 500 691 477 391 940)
+  )
+ )
+ (layout
+  (style 1)
+  (align *)
+  (interpolate *)
+ )
+ (solutions
+  (label *)
+  (predecessor *)
+  (subgraph 0)
+  (potential *)
+  (colour *)
+ )
+)
+
+
+# Complete bipartite graph with plane embedding
+# Coordinates uniformly distributed in [0,999]

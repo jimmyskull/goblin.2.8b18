@@ -1,0 +1,940 @@
+
+#-------------------------------------------------------------------------------
+# Module:     menuLayout.tk
+# Activation: Loaded during GOBLET startup
+# Scope:      Layout menu item, bindings, some small dialogs
+#             Graph display and navigator functionality
+#-------------------------------------------------------------------------------
+
+
+
+proc MakeLayoutMenu {} {
+    global ThisGraph
+
+    destroy .mbar.layout.menu
+
+    menu .mbar.layout.menu -tearoff false
+
+    if {[$ThisGraph is mip]} {
+        .mbar.layout.menu add command -label "Display Options..." \
+            -accelerator Shift+Ctrl+D -command SetLpDisplayOptions
+        bind . <Control-D> {SetLpDisplayOptions}
+
+        return
+    }
+
+    .mbar.layout.menu add command -label "Strip Geometry" -underline 6 \
+        -command StripGraph
+    .mbar.layout.menu add command -label "Scale Geometry..." -underline 0 \
+        -command ScaleGraph
+    .mbar.layout.menu add command -label "Node Grids..." \
+        -underline 0 -command SetGrids
+    .mbar.layout.menu add command -label "Fit Into Window" \
+        -accelerator Ctrl+W -command FitIntoWindow
+    .mbar.layout.menu add command -label "Zoom In" \
+        -accelerator Ctrl+ -command ZoomIn
+    .mbar.layout.menu add command -label "Zoom Out" \
+        -accelerator Ctrl- -command ZoomOut
+
+    if {[$ThisGraph is sparse]} {
+        .mbar.layout.menu add separator
+        menu .mbar.layout.menu.planar -tearoff false
+        .mbar.layout.menu add cascade -label "Planarity" -underline 0 \
+            -menu .mbar.layout.menu.planar
+        .mbar.layout.menu.planar add command -label "Planarity Test" \
+            -underline 0 -command PlanarityTest
+        .mbar.layout.menu.planar add command -label "Combinatorial Embedding" \
+            -underline 0 -command PlanarizeIncidenceOrder
+        .mbar.layout.menu.planar add command -label "Augment Exterior Face" \
+            -underline 0 -command RefineExteriorFace
+        .mbar.layout.menu.planar add command -label "Straight Line Drawing" \
+            -underline 9 -command StraightLineDrawing
+        .mbar.layout.menu.planar add command -label "Convex Drawing" \
+            -underline 9 -command ConvexDrawing
+        .mbar.layout.menu.planar add command -label "Outerplanar Drawing" \
+            -underline 12 -command OuterplanarDrawing
+        .mbar.layout.menu.planar add command -label "Equilateral Drawing" \
+            -underline 12 -command EquilateralDrawing
+
+        menu .mbar.layout.menu.fdp -tearoff false
+        .mbar.layout.menu add cascade -label "Force Directed Placement" \
+            -underline 0 -menu .mbar.layout.menu.fdp
+        .mbar.layout.menu.fdp add command -label "Unrestricted" \
+            -underline 0 -command {ForceDirected}
+        .mbar.layout.menu.fdp add command -label "Preserve Topology" \
+            -underline 0 -command {ForceDirected -preserve}
+
+        menu .mbar.layout.menu.layered -tearoff false
+        .mbar.layout.menu add cascade -label "Layered Drawing" \
+            -underline 0 -menu .mbar.layout.menu.layered
+        .mbar.layout.menu.layered add command -label "Compound Method" \
+            -underline 0 -command {CallLayout layered}
+        .mbar.layout.menu.layered add command -label "Assign Layers by Colours" \
+            -underline 7 -command {CallLayout layered "-colours -horizontal"}
+        .mbar.layout.menu.layered add command -label "Minimum Edge Span Layering" \
+            -underline 7 -command {CallLayout layered -span}
+        .mbar.layout.menu.layered add command -label "Sweep Layer-By-Layer" \
+            -underline 0 -command {CallLayout layered -sweep}
+        .mbar.layout.menu.layered add command -label "Align Horizontal Coordinates" \
+            -underline 0 -command {CallLayout layered -align}
+        .mbar.layout.menu.layered add command -label "FDP Horizontal Coordinates" \
+            -underline 0 -command {ForceDirected -layered}
+        .mbar.layout.menu.layered add command -label "FDP Restricted Coordinates" \
+            -underline 0 -command {ForceDirected -layered -preserve}
+    }
+
+    menu .mbar.layout.menu.tree -tearoff false
+    .mbar.layout.menu add cascade -label "Predecessor Tree" -underline 12 \
+        -menu .mbar.layout.menu.tree
+    .mbar.layout.menu.tree add command -label "Layered Default Mode" \
+        -underline 6 -command {CallLayout tree}
+    .mbar.layout.menu.tree add command -label "Layered Aligned Left" \
+        -underline 6 -command {CallLayout tree -left}
+    .mbar.layout.menu.tree add command -label "Layered Centered" \
+        -underline 0 -command {CallLayout tree -center}
+    .mbar.layout.menu.tree add command -label "Layered Force Directed" \
+        -underline 6 -command {CallLayout tree -fdp}
+    .mbar.layout.menu.tree add command -label "Layered Aligned Right" \
+        -underline 6 -command {CallLayout tree -right}
+    .mbar.layout.menu.tree add command -label "Orthogonal Kandinsky" \
+        -underline 0 -command {CallLayout "orthogonal -tree"}
+    .mbar.layout.menu.tree add command -label "Orthogonal HV Binary" \
+        -underline 0 -command {CallLayout "orthogonal -tree -binary"}
+
+    menu .mbar.layout.menu.circular -tearoff false
+    .mbar.layout.menu add cascade -label "Circular Drawing" -underline 0 \
+        -menu .mbar.layout.menu.circular
+    .mbar.layout.menu.circular add command -label "By Predecessors" \
+        -underline 3 -command {CallLayout circular -predecessors}
+    .mbar.layout.menu.circular add command -label "By Colours" \
+        -underline 3 -command {CallLayout circular -colours}
+
+    if {[$ThisGraph is sparse]} {
+        menu .mbar.layout.menu.ortho -tearoff false
+        .mbar.layout.menu add cascade -label "Orthogonal Drawing" -underline 0 \
+            -menu .mbar.layout.menu.ortho
+        .mbar.layout.menu.ortho add command -label "Interactive Kandinsky 1-Bent" \
+            -underline 0 -command {CallLayout orthogonal}
+        .mbar.layout.menu.ortho add command -label "Planar Kandinsky 1-Bent" \
+            -underline 0 -command {CallLayout "orthogonal -planar"}
+        .mbar.layout.menu.ortho add command -label "Planar Staircase" \
+            -underline 0 -command {CallLayout "orthogonal -staircase"}
+        .mbar.layout.menu.ortho add command -label "4-Orthogonal" \
+            -underline 0 -command {CallLayout "orthogonal -small"}
+        .mbar.layout.menu.ortho add command -label "Big Node Planar" \
+            -underline 0 -command {CallLayout "visibility -giotto"}
+        .mbar.layout.menu.ortho add command -label "Visibility Representation" \
+            -underline 0 -command {CallLayout visibility}
+        .mbar.layout.menu.ortho add command -label "3-Planar" \
+            -underline 0 -command {CallLayout "visibility -giotto"}
+        .mbar.layout.menu.ortho add command -label "Series-Parallel" \
+            -underline 0 -command {SeriesParallelDrawing}
+        .mbar.layout.menu.ortho add command -label "Kandinsky Tree" \
+            -underline 0 -command {CallLayout "orthogonal -tree"}
+        .mbar.layout.menu.ortho add command -label "Binary Tree" \
+            -underline 0 -command {CallLayout "orthogonal -tree -binary"}
+
+        .mbar.layout.menu add command -label "Clean Up Arc Routing" -underline 0 \
+            -command {CallLayout align}
+    }
+
+    .mbar.layout.menu add separator
+    .mbar.layout.menu add command -label "Arc Display..." \
+        -accelerator Shift+Ctrl+A -command SourceArcDisplay
+    .mbar.layout.menu add command -label "Node Display..." \
+        -accelerator Shift+Ctrl+N -command SourceNodeDisplay
+    .mbar.layout.menu add command -label "Layout Options..." \
+        -accelerator Shift+Ctrl+W -command SourceLayoutOptions
+
+    bind . <Control-t> {DisplayNewLayout}
+    bind . <Control-w> {FitIntoWindow}
+    bind . <Control-A> {SourceArcDisplay}
+    bind . <Control-N> {SourceNodeDisplay}
+    bind . <Control-W> {SourceLayoutOptions}
+    bind . <Control-plus> {ZoomIn}
+    bind . <Control-minus> {ZoomOut}
+}
+
+proc InitDisplay {} {
+    global Mode FileName ThisBackup
+
+    set Mode ""
+
+    if {[goblin solver idle]} {ToggleBrowser} else {
+        if {![catch {goblin messenger filename} traceFile]} {
+            TraceObject [file rootname $traceFile]
+        } else {
+            TraceObject $FileName.backup$ThisBackup
+        }
+    }
+}
+
+proc DisplayNewLayout {} {
+    global ThisGraph FileCounter goblinTraceCounter Mode goblinCommLevel
+
+    set savedLevel $goblinCommLevel
+    set goblinCommLevel 0
+    $ThisGraph trace
+    set goblinCommLevel $savedLevel
+
+    set FileCounter $goblinTraceCounter
+    set Mode "display object"
+
+    InitNavigator
+}
+
+proc InitNavigator {} {
+    global goblinTraceCounter Mode
+
+    if {$goblinTraceCounter>0} {
+        ResetMode "navigate"
+        Navigate
+    } else {
+        DisplayObject
+    }
+}
+
+proc DisplayCanvas {objectName} {
+    global c FileName NodeIndex RevNodeIndex ArcIndex RevArcIndex Mode
+
+    if {[catch {$objectName export goblet $FileName.tk} result]} {
+        # Reaching this means that the graph cannot be displayed
+
+        DisplayNothing
+        return 0
+    }
+
+    InitCanvasRegion
+    source $FileName.tk
+
+    for {set i 0} {$i<[llength $goblinCanvasObjects]} {incr i} {
+        set row [lindex $goblinCanvasObjects $i]
+        set objectType [lindex $row 1]
+
+        if {$objectType==6} {continue}
+
+        if {$objectType==5} {
+            # Assign a bounding box
+
+            set width [lindex [lindex $row 3] 0]
+            set height [lindex [lindex $row 3] 1]
+            set cmd [list $c configure -width $width -height $height]
+            eval $cmd
+            set scrollregion [list 0 0 $width $height]
+            set cmd [list $c configure -scrollregion $scrollregion]
+            eval $cmd
+
+            continue
+        }
+
+        if {$objectType!=4} {
+            # Display the canvas object
+
+            set cmd [concat [list $c create] \
+                [lindex $row 2] [lindex $row 3] [lindex $row 4] ]
+            set canvasIndex [eval $cmd]
+
+            # Keep mappings between the graph object and the canvas
+            set objectIndex [lindex $row 0]
+
+            if {$objectType==0} {
+                $c itemconfigure $canvasIndex -tags node
+                set RevNodeIndex($objectIndex) $canvasIndex
+                set NodeIndex($canvasIndex) $objectIndex
+            }
+
+            if {$objectType==1} {
+                $c itemconfigure $canvasIndex -tags arc
+                set RevArcIndex($objectIndex) $canvasIndex
+                set ArcIndex($canvasIndex) $objectIndex
+            }
+
+            if {$objectType==2} {
+                $c itemconfigure $canvasIndex -tags node_text
+                set NodeIndex($canvasIndex) $objectIndex
+            }
+
+            if {$objectType==3} {
+                $c itemconfigure $canvasIndex -tags arc_text
+                set ArcIndex($canvasIndex) $objectIndex
+            }
+        }
+    }
+
+    if {[string equal $Mode "display object"]} {
+        bind $c <Button-3> {
+            set x [$c canvasx %x]
+            set y [$c canvasy %y]
+            set canvasIDs [$c find overlapping \
+                [expr $x-2] [expr $y-2] [expr $x+2] [expr $y+2]]
+
+            for {set i 0} {$i<[llength $canvasIDs]} {incr i} {
+                set thisID [lindex $canvasIDs $i]
+
+                if {[$c type $thisID] != "text"} {continue}
+
+                if {[info exists NodeIndex($thisID)]} {
+                    UploadAndDownloadLabels $NodeIndex($thisID) $ThisArc
+                    NodeContextMenu [winfo pointerx $c] [winfo pointery $c]
+                    break
+                }
+
+                if {[info exists ArcIndex($thisID)]} {
+                    UploadAndDownloadLabels $ThisNode $ArcIndex($thisID)
+                    ArcContextMenu [winfo pointerx $c] [winfo pointery $c]
+                    break
+                }
+            }
+        }
+
+        $c bind node <Button-3> {
+            set thisObj [$c find withtag current]
+            UploadAndDownloadLabels $NodeIndex($thisObj) $ThisArc
+            NodeContextMenu [winfo pointerx $c] [winfo pointery $c]
+        }
+
+        $c bind arc <Button-3> {
+            set thisObj [$c find withtag current]
+            UploadAndDownloadLabels $ThisNode $ArcIndex($thisObj)
+            ArcContextMenu [winfo pointerx $c] [winfo pointery $c]
+        }
+    }
+
+    $c bind node <Any-Enter> {
+        set thisObj [$c find withtag current]
+        $c itemconfigure current -width 3 -outline ivory3
+        set currentNode $NodeIndex($thisObj)
+        MakeBalloonEdit "node index $currentNode" %x %y
+    }
+
+    $c bind node <Any-Leave> {
+        set thisObj [$c find withtag current]
+        $c itemconfigure current -width 1 -outline black
+        set currentNode ""
+        DestroyBalloon
+    }
+
+    BackupScrollPos
+    file delete $FileName.tk
+
+    return 1
+}
+
+proc NodeContextMenu {x y} {
+    global ThisGraph ThisNode
+
+    destroy .contextMenu
+    menu .contextMenu -tearoff false
+
+    .contextMenu add command -label "Node Index $ThisNode:" \
+        -command {
+            destroy .contextMenu
+        }
+    .contextMenu add separator
+    .contextMenu add command -label "Edit Node Labels" \
+        -command {
+            destroy .contextMenu
+            source [file join $GoblinTclPath editNodeLabels.tk]
+        }
+    .contextMenu add command -label "Mark as Root" \
+        -command {
+            destroy .contextMenu
+            $ThisGraph set root $ThisNode
+        }
+    .contextMenu add command -label "Mark as Source" \
+        -command {
+            destroy .contextMenu
+            $ThisGraph set source $ThisNode
+        }
+    .contextMenu add command -label "Mark as Target" \
+        -command {
+            destroy .contextMenu
+            $ThisGraph set target $ThisNode
+        }
+    .contextMenu add separator
+    .contextMenu add command -label "Delete Node" \
+        -command {
+            destroy .contextMenu
+            $ThisGraph node $ThisNode delete
+            PropagateModifications
+            InitDisplay
+        }
+
+    tk_popup .contextMenu $x $y
+}
+
+proc ArcContextMenu {x y} {
+    global ThisGraph ThisArc
+
+    destroy .contextMenu
+    menu .contextMenu -tearoff false
+
+    .contextMenu add command -label "Arc Index $ThisArc:" \
+        -command {
+            destroy .contextMenu
+        }
+    .contextMenu add separator
+    .contextMenu add command -label "Edit Arc Labels" \
+        -command {
+            destroy .contextMenu
+            source [file join $GoblinTclPath editArcLabels.tk]
+        }
+
+    if {![$ThisGraph is undirected]} {
+        .contextMenu add command -label "Revert Direction" \
+            -command {
+                destroy .contextMenu
+                $ThisGraph arc [expr {2*$ThisArc}] flip
+                PropagateModifications
+                InitDisplay
+            }
+    }
+
+    if {![$ThisGraph is undirected] && ![$ThisGraph is directed]} {
+        .contextMenu add command -label "Enable/Disable Direction" \
+            -command {
+                destroy .contextMenu
+                $ThisGraph arc [expr {2*$ThisArc}] set orientation \
+                    [expr {1-[$ThisGraph arc [expr {2*$ThisArc}] \
+                        orientation]}]
+                PropagateModifications
+                InitDisplay
+            }
+    }
+
+    .contextMenu add separator
+    .contextMenu add command -label "Delete Arc" \
+        -command {
+            destroy .contextMenu
+                $ThisGraph arc [expr {2*$ThisArc}] delete
+                PropagateModifications
+                InitDisplay
+        }
+
+    tk_popup .contextMenu $x $y
+}
+
+proc DisplayTextForm {objectName} {
+    global goblinLPDisplay FileName
+
+    InitCanvasRegion 1
+    $objectName export ascii $FileName.ascii $goblinLPDisplay
+    LoadTextForm $FileName.ascii
+    file delete $FileName.ascii
+}
+
+proc DisplayNothing {} {
+    DestroyCanvasRegion
+    PostStatusInfo "no visual information available"
+}
+
+proc DisplayCanvasOrTextFile {fileName} {
+    global goblinExtension MaxDisplayArcs
+
+    if {![file exists $fileName.$goblinExtension]} {
+        DisplayNothing
+        return 0
+    }
+
+    set thisObject displayObject
+    set retCode 0
+    goblinImport $thisObject $fileName.$goblinExtension gob -spawn
+
+    if {[$thisObject is sparse] && [$thisObject #arcs]>$MaxDisplayArcs} {
+        DisplayNothing
+    } else {
+        if {[$thisObject is mip]} {
+            DisplayTextForm $thisObject
+            set retCode 2
+        } else {
+            if {![$thisObject is visible]} {
+                if {[$thisObject #nodes]==0 || \
+                    (![$thisObject is sparse] && [$thisObject #arcs]>$MaxDisplayArcs)} {
+                    DisplayNothing
+                } else {
+                    DisplayTextForm $thisObject
+                    set retCode 2
+                }
+            } else {
+                set retCode [DisplayCanvas $thisObject]
+            }
+        }
+    }
+
+    $thisObject delete
+
+    return $retCode
+}
+
+proc DisplayObject {} {
+    global ThisGraph FileName OrigFileName ThisBackup
+
+    if {[goblin solver idle]} {
+        ResetMode "display object"
+
+        if {![DisplayCanvasOrTextFile $FileName.backup$ThisBackup]} {return}
+
+        MakeEditorBar
+    } else {
+        if {![catch {goblin messenger filename} traceFile]} {
+            TraceObject [file rootname $traceFile]
+        } else {
+            TraceObject $FileName.backup$ThisBackup
+        }
+    }
+}
+
+proc Navigate {{direction "plus"}} {
+    global FileName FileCounter goblinTraceCounter goblinExtension
+
+    if {$direction=="plus"} {
+        while {![file exists "$FileName.trace$FileCounter.$goblinExtension"] &&   
+            $FileCounter<=$goblinTraceCounter} {incr FileCounter}
+
+        if {$FileCounter>$goblinTraceCounter} {
+            while {![file exists "$FileName.trace$FileCounter.$goblinExtension"] &&   
+                $FileCounter>0} {incr FileCounter -1}
+        }
+
+        if {$FileCounter==0} {
+            set goblinTraceCounter 0
+            ResetMode "display object"
+            InitDisplay
+            return
+        }
+    } else {
+        while {![file exists "$FileName.trace$FileCounter.$goblinExtension"] &&   
+            $FileCounter>0} {incr FileCounter -1}
+
+        if {$FileCounter==0} {
+            while {![file exists "$FileName.trace$FileCounter.$goblinExtension"] &&   
+                $FileCounter<=$goblinTraceCounter} {incr FileCounter}
+        }
+
+        if {$FileCounter>$goblinTraceCounter} {
+            set goblinTraceCounter 0
+            return
+            ResetMode "display object"
+            InitDisplay
+        }
+    }
+
+    PostStatusInfo "trace file #$FileCounter of $goblinTraceCounter"
+
+    set traceFile $FileName.trace$FileCounter
+
+    DisplayCanvasOrTextFile $traceFile
+
+    MakeNavigationBar
+}
+
+proc TraceObject {traceFile} {
+    DisplayCanvasOrTextFile $traceFile
+    ResetMode "trace"
+    MakeTracingBar
+    PostStatusInfo "$traceFile"
+}
+
+proc LoadTextForm {textFile} {
+    global c GoblinTclPath
+
+    if [catch {open "| cat < \"$textFile\""} textStream] {
+        AcknowledgementMessage "Could not open textfile"
+        return
+    }
+
+    $c configure -state normal
+    $c delete 1.0 end
+
+    while {[gets $textStream thisLine]>=0} {
+        $c insert end $thisLine\n
+    }
+
+    close $textStream
+    $c see 1.0
+    $c configure -state disabled
+}
+
+proc SetLpDisplayOptions {} {
+    global GoblinTclPath
+    source [file join $GoblinTclPath layoutLPOpt.tk]
+}
+
+proc StripGraph {} {
+    global ThisGraph
+
+    $ThisGraph layout strip
+    PropagateModifications
+}
+
+proc ScaleGraph {} {
+    global ThisGraph GoCommand UploadCommand WDInput xMin xMax yMin yMax \
+        MirrorX MirrorY
+
+    set xMin [$ThisGraph min cx]
+    set xMax [$ThisGraph max cx]
+    set yMin [$ThisGraph min cy]
+    set yMax [$ThisGraph max cy]
+    set MirrorX 0
+    set MirrorY 0
+
+    set GoCommand {
+        if {$MirrorX} {
+            set parList1 "$xMax $xMin"
+        } else {
+            set parList1 "$xMin $xMax"
+        }
+
+        if {$MirrorY} {
+            set parList2 "$yMax $yMin"
+        } else {
+            set parList2 "$yMin $yMax"
+        }
+
+        eval $ThisGraph layout scale $parList1 $parList2
+        set MirrorX 0
+        set MirrorY 0
+        PropagateModifications
+    }
+
+    set UploadCommand {}
+
+    DisplayInputDialog "Scale Geometry" "ScaleGraph" "Scale" "Cancel" {
+        label $WDInput.frame.label -text "Tight Bounding Box: " -anchor w
+        grid $WDInput.frame.label -in $WDInput.frame -row 0 -column 0 \
+            -rowspan 1 -columnspan 4 -sticky news -padx 1m
+
+        frame $WDInput.frame.dummy1
+        grid $WDInput.frame.dummy1 -in $WDInput.frame -row 1 -column 0 \
+            -rowspan 1 -columnspan 4 -sticky news -padx 1m -pady 1m
+
+        label $WDInput.frame.xMinText -text "x: " -anchor w
+        grid $WDInput.frame.xMinText -in $WDInput.frame -row 2 -column 0 \
+            -rowspan 1 -columnspan 1 -sticky news -padx 1m
+        entry $WDInput.frame.xMin -textvariable xMin -bg white -width 5
+        grid $WDInput.frame.xMin -in $WDInput.frame -row 2 -column 1 \
+            -rowspan 1 -columnspan 1 -sticky news -padx 1m
+        label $WDInput.frame.xMaxText -text " to " -anchor w
+        grid $WDInput.frame.xMaxText -in $WDInput.frame -row 2 -column 2 \
+            -rowspan 1 -columnspan 1 -sticky news -padx 1m
+        entry $WDInput.frame.xMax -textvariable xMax -bg white -width 5
+        grid $WDInput.frame.xMax -in $WDInput.frame -row 2 -column 3 \
+            -rowspan 1 -columnspan 1 -sticky news -padx 1m
+
+        label $WDInput.frame.yMinText -text "y: " -anchor w
+        grid $WDInput.frame.yMinText -in $WDInput.frame -row 3 -column 0 \
+            -rowspan 1 -columnspan 1 -sticky news -padx 1m
+        entry $WDInput.frame.yMin -textvariable yMin -bg white -width 5
+        grid $WDInput.frame.yMin -in $WDInput.frame -row 3 -column 1 \
+            -rowspan 1 -columnspan 1 -sticky news -padx 1m
+        label $WDInput.frame.yMaxText -text " to " -anchor w
+        grid $WDInput.frame.yMaxText -in $WDInput.frame -row 3 -column 2 \
+            -rowspan 1 -columnspan 1 -sticky news -padx 1m
+        entry $WDInput.frame.yMax -textvariable yMax -bg white -width 5
+        grid $WDInput.frame.yMax -in $WDInput.frame -row 3 -column 3 \
+            -rowspan 1 -columnspan 1 -sticky news -padx 1m
+
+        frame $WDInput.frame.dummy2
+        grid $WDInput.frame.dummy2 -in $WDInput.frame -row 4 -column 0 \
+            -rowspan 1 -columnspan 4 -sticky news -padx 1m -pady 1m
+
+        checkbutton $WDInput.frame.mirrorX -variable MirrorX \
+            -text "Mirror Horizontally"
+        grid $WDInput.frame.mirrorX -in $WDInput.frame -row 5 -column 0 \
+            -rowspan 1 -columnspan 4 -sticky w -padx 1m
+        checkbutton $WDInput.frame.mirrorY -variable MirrorY  \
+            -text "Mirror Vertically"
+        grid $WDInput.frame.mirrorY -in $WDInput.frame -row 6 -column 0 \
+            -rowspan 1 -columnspan 4 -sticky w -padx 1m
+
+        grid columnconfig $WDInput.frame 0 -weight 1 -minsize 0
+        grid columnconfig $WDInput.frame 1 -weight 1 -minsize 0
+        grid columnconfig $WDInput.frame 2 -weight 1 -minsize 0
+        grid columnconfig $WDInput.frame 3 -weight 1 -minsize 0
+
+        bind $WDInput.frame.xMin <Return> {focus $WDInput.frame.xMax}
+        bind $WDInput.frame.xMax <Return> {focus $WDInput.frame.yMin}
+        bind $WDInput.frame.yMin <Return> {focus $WDInput.frame.yMax}
+        bind $WDInput.frame.yMax <Return> $GoCommand
+    }
+
+    global WD
+    focus $WD(ScaleGraph).frame.xMin
+}
+
+proc PlanarityTest {} {
+    CallSolver {Planarity} {$ThisGraph is planar} {
+        PostSolverMessage "Graph is planar"
+    } "0" {
+        global goblinArcColours
+        set goblinArcColours 1
+        PostSolverMessage "Graph is non-planar"
+    }
+}
+
+proc RefineExteriorFace {} {
+    CallSolver {Outerplanarity} {$ThisGraph incidences outerplanar} {
+        PostSolverMessage "Exterior face has been maximized"
+    }
+}
+
+proc StraightLineDrawing {} {
+    CallSolver {Planar Drawing} {$ThisGraph layout plane} {
+        PostSolverMessage "Drawing complete"
+    }
+}
+
+proc ConvexDrawing {} {
+    CallSolver {Convex drawing} {$ThisGraph layout plane -convex} {
+        PostSolverMessage "Drawing complete"
+    }
+}
+
+
+proc SeriesParallelDrawing {} {
+    CallWithSourceAndTarget {
+        CallSolver {Series parallel drawing} {
+            $ThisGraph series-parallel -source [$ThisGraph source] \
+               -target [$ThisGraph target] -layout
+        } {
+            PostSolverMessage "Drawing complete"
+        }
+    } "Source Node (optional)" "Target Node (optional)"
+}
+
+proc OuterplanarDrawing {} {
+    CallSolver {Outerplanar drawing} {
+        $ThisGraph layout circular -outerplanar
+    } {
+        PostSolverMessage "Drawing complete"
+    }
+}
+
+proc EquilateralDrawing {} {
+    CallSolver {Equilateral Drawing} {
+        $ThisGraph layout equilateral
+    } {
+        PostSolverMessage "Drawing complete"
+    }
+}
+
+proc ForceDirected {{par1 ""} {par2 ""}} {
+    CallSolver {Force Directed Drawing} \
+        [concat {$ThisGraph} layout fdp $par1 $par2] \
+    {
+        PostSolverMessage "Drawing complete"
+    }
+}
+
+proc CallLayout {option {option2 ""}} {
+    CallSolver "Layout ($option)" \
+        [concat {$ThisGraph} layout $option $option2] \
+    {
+        PostSolverMessage "Drawing complete"
+    }
+}
+
+proc FitIntoWindow {} {
+    global ThisGraph goblinXZoom goblinYZoom goblinXShift goblinYShift \
+        goblinLegenda goblinNodeSize Zoom c Mode
+
+    if {[$ThisGraph is mip]} {return}
+
+    if {![winfo exists $c]} {return}
+
+    set xSize [winfo width $c]
+    set ySize [winfo height $c]
+
+    set xMax [$ThisGraph node 0 cx]
+    set yMax [$ThisGraph node 0 cy]
+    set xMin $xMax
+    set yMin $yMax
+
+    for {set v 0} {$v<[$ThisGraph #nodes]+[$ThisGraph #artificial]} {incr v} {
+
+        if {[$ThisGraph node $v hidden]} { continue}
+
+        if {[$ThisGraph node $v cx]<$xMin} {set xMin [$ThisGraph node $v cx]}
+        if {[$ThisGraph node $v cy]<$yMin} {set yMin [$ThisGraph node $v cy]}
+        if {[$ThisGraph node $v cx]>$xMax} {set xMax [$ThisGraph node $v cx]}
+        if {[$ThisGraph node $v cy]>$yMax} {set yMax [$ThisGraph node $v cy]}
+    }
+
+    set margin [expr round(2*$goblinNodeSize*$Zoom)]
+
+    if {$xMax>$xMin && $yMax>$yMin} {
+        set goblinXZoom [expr ($xSize-2*$margin)/($Zoom*($xMax-$xMin))]
+        set goblinXShift [expr round(($margin-$xMin*$Zoom*$goblinXZoom)/$Zoom)]
+        set goblinYZoom \
+            [expr ($ySize-2*$margin)/($Zoom*($yMax-$yMin+$goblinLegenda))]
+        set goblinYShift [expr round(($margin-$yMin*$Zoom*$goblinYZoom)/$Zoom)]
+
+        if {$Mode!="trace"} {PropagateModifications}
+    }
+}
+
+proc ZoomIn {} {
+    global goblinXZoom goblinYZoom
+    set goblinXZoom [expr {round($goblinXZoom*1.25)}]
+    set goblinYZoom [expr {round($goblinYZoom*1.25)}]
+    PropagateModifications
+}
+
+proc ZoomOut {} {
+    global goblinXZoom goblinYZoom
+    set goblinXZoom [expr {round($goblinXZoom*0.8)}]
+    set goblinYZoom [expr {round($goblinYZoom*0.8)}]
+    PropagateModifications
+}
+
+proc SourceArcDisplay {} {
+    global GoblinTclPath
+    source [file join $GoblinTclPath layoutArcs.tk]
+}
+
+proc SourceNodeDisplay {} {
+    global GoblinTclPath
+    source [file join $GoblinTclPath layoutNodes.tk]
+}
+
+proc SourceLayoutOptions {} {
+    global GoblinTclPath
+    source [file join $GoblinTclPath layoutMeasures.tk]
+}
+
+proc SetGrids {} {
+    global ThisGraph goblinNodeSep goblinBendSep goblinFineSep \
+        GoCommand UploadCommand WDInput
+
+    set GoCommand {
+        if {[expr {$goblinNodeSep<0 && $goblinNodeSep>100000}]} {
+            focus $WDInput.frame.nodes
+            continue
+        }
+        if {[expr {$goblinBendSep<0 && $goblinBendSep>50000}]} {
+            focus $WDInput.frame.bends
+            continue
+        }
+        if {[expr {$goblinFineSep<0 && $goblinFineSep>10000}]} {
+            focus $WDInput.frame.arcs
+            continue
+        }
+
+        # Move all nodes to grid coordinates
+
+        for {set v 0} {$v<[$ThisGraph #nodes]} {incr v} {
+            $ThisGraph node $v set cx \
+                [expr round(([$ThisGraph node $v cx]+0.0000000001)/$goblinNodeSep)*$goblinNodeSep]
+            $ThisGraph node $v set cy \
+                [expr round(([$ThisGraph node $v cy]+0.0000000001)/$goblinNodeSep)*$goblinNodeSep]
+        }
+
+        for {set a 0} {$a<[$ThisGraph #arcs]} {incr a} {
+            set v [$ThisGraph arc [expr {2*$a}] align]
+
+            if {![string equal $v "*"] && $goblinFineSep!=0} {
+                $ThisGraph node $v set cx \
+                    [expr round(([$ThisGraph node $v cx]+0.0000000001)/$goblinFineSep)*$goblinFineSep]
+                $ThisGraph node $v set cy \
+                    [expr round(([$ThisGraph node $v cy]+0.0000000001)/$goblinFineSep)*$goblinFineSep]
+            }
+
+            if {$v!="*"} {set v [$ThisGraph node $v thread]}
+
+            while {$v!="*" && $goblinBendSep!=0} {
+                $ThisGraph node $v set cx \
+                    [expr round(([$ThisGraph node $v cx]+0.0000000001)/$goblinBendSep)*$goblinBendSep]
+                $ThisGraph node $v set cy \
+                    [expr round(([$ThisGraph node $v cy]+0.0000000001)/$goblinBendSep)*$goblinBendSep]
+                set v [$ThisGraph node $v thread]
+            }
+        }
+
+        PropagateModifications
+    }
+
+    set UploadCommand {
+        if {[expr {$goblinNodeSep<0 && $goblinNodeSep>100000}]} {
+            focus $WDInput.frame.nodes
+            continue
+        }
+        if {[expr {$goblinBendSep<0 && $goblinBendSep>50000}]} {
+            focus $WDInput.frame.bends
+            continue
+        }
+        if {[expr {$goblinFineSep<0 && $goblinFineSep>10000}]} {
+            focus $WDInput.frame.arcs
+            continue
+        }
+
+        DestroyFormOrWindow "Node Grids" $WDInput
+    }
+
+    DisplayInputDialog "Node Grids" "SetGrids" "Force" "Done" {
+        label $WDInput.frame.label -text "Grids for Node Positions:" -anchor w
+        grid $WDInput.frame.label -in $WDInput.frame -row 0 -column 0 \
+            -rowspan 1 -columnspan 2 -sticky news -padx 1m
+
+        frame $WDInput.frame.dummy1
+        grid $WDInput.frame.dummy1 -in $WDInput.frame -row 1 -column 0 \
+            -rowspan 1 -columnspan 2 -sticky news -padx 1m -pady 1m
+
+        label $WDInput.frame.nText -text "Graph nodes:" -anchor w
+        grid $WDInput.frame.nText -in $WDInput.frame -row 2 -column 0 \
+            -rowspan 1 -columnspan 1 -sticky news -padx 1m
+        entry $WDInput.frame.nodes -textvariable goblinNodeSep -bg white -width 5
+        grid $WDInput.frame.nodes -in $WDInput.frame -row 2 -column 1 \
+            -rowspan 1 -columnspan 1 -sticky news -padx 1m
+
+        label $WDInput.frame.bText -text "Bend Nodes:" -anchor w
+        grid $WDInput.frame.bText -in $WDInput.frame -row 3 -column 0 \
+            -rowspan 1 -columnspan 1 -sticky news -padx 1m
+        entry $WDInput.frame.bends -textvariable goblinBendSep -bg white -width 5
+        grid $WDInput.frame.bends -in $WDInput.frame -row 3 -column 1 \
+            -rowspan 1 -columnspan 1 -sticky news -padx 1m
+
+        label $WDInput.frame.aText -text "Arc Labels:" -anchor w
+        grid $WDInput.frame.aText -in $WDInput.frame -row 4 -column 0 \
+            -rowspan 1 -columnspan 1 -sticky news -padx 1m
+        entry $WDInput.frame.arcs -textvariable goblinFineSep -bg white -width 5
+        grid $WDInput.frame.arcs -in $WDInput.frame -row 4 -column 1 \
+            -rowspan 1 -columnspan 1 -sticky news -padx 1m
+
+        frame $WDInput.frame.dummy2
+        grid $WDInput.frame.dummy2 -in $WDInput.frame -row 5 -column 0 \
+            -rowspan 1 -columnspan 2 -sticky news -padx 1m -pady 1m
+
+        label $WDInput.frame.label2 -text "0 = Free Placement" -anchor w
+        grid $WDInput.frame.label2 -in $WDInput.frame -row 6 -column 0 \
+            -rowspan 1 -columnspan 2 -sticky news -padx 1m
+
+        grid columnconfig $WDInput.frame 0 -weight 1 -minsize 0
+        grid columnconfig $WDInput.frame 1 -weight 1 -minsize 0
+
+        bind $WDInput.frame.nodes <Return> {
+            set goblinBendSep [expr round($goblinNodeSep*0.5)]
+            if {[expr $goblinBendSep*2 != $goblinNodeSep]} {
+                set goblinBendSep 1
+            }
+
+            set goblinFineSep [expr round($goblinBendSep*0.2)]
+            if {[expr $goblinFineSep*5 != $goblinBendSep]} {
+                set goblinFineSep 1
+            }
+
+            focus $WDInput.frame.bends
+        }
+        bind $WDInput.frame.bends <Return> {
+            set goblinFineSep [expr round($goblinBendSep*0.2)]
+            if {[expr $goblinFineSep*5 != $goblinBendSep]} {
+                set goblinFineSep 1
+            }
+
+            focus $WDInput.frame.arcs
+        }
+        bind $WDInput.frame.arcs <Return> $UploadCommand
+    }
+
+    global WD
+    focus $WD(SetGrids).frame.nodes
+}

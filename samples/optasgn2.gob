@@ -1,0 +1,39 @@
+(dense_bigraph
+ (definition
+  (nodes 8 4 0)
+  (ucap 1)
+  (lcap 0)
+  (demand 1)
+  (directed 0)
+ )
+ (objectives
+  (commodities 1)
+  (bound *)
+  (length
+   (comm0
+     468 901 391 301 106 500 870 691 857 477
+     119 391 509 940  53 395)
+  )
+ )
+ (geometry
+  (metrics 0)
+  (dim 0)
+ )
+ (layout
+  (style 1)
+  (align *)
+  (interpolate *)
+ )
+ (solutions
+  (label *)
+  (predecessor *)
+  (subgraph 0)
+  (potential *)
+  (colour *)
+ )
+ (configure
+   -subgraph           0
+   -arcStyle           1
+   -traceLevel         0
+   -traceStep          1)
+)

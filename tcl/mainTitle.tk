@@ -1,0 +1,39 @@
+
+#-------------------------------------------------------------------------------
+# Module:     mainTitle.tk
+# Activation: Loaded during GOBLET startup
+# Scope:      Start screen
+#-------------------------------------------------------------------------------
+
+
+
+toplevel .trailer
+wm geometry .trailer \
+    600x400+[expr ([winfo screenwidth .]-600)/2]+[expr ([winfo screenheight .]-400)/2]
+wm overrideredirect .trailer 1
+
+
+canvas .trailer.canvasRegion -bg ivory2
+pack .trailer.canvasRegion -side top -fill both -expand yes -padx 1m -pady 1m
+
+global GoblinVersion
+.trailer.canvasRegion create text 40 30 -text "GOBLET Graph Browser $GoblinVersion" -anchor nw \
+    -font -*-lucida-bolditalic-i-normal--24-*-*-*-p-*-*-*
+
+.trailer.canvasRegion create text 550 340 -anchor e \
+    -text "GOBLIN Graph Object Library for Network Programming Problems" \
+    -font -*-lucida--r-narrow--14-*-*-*-p-*-*-*
+.trailer.canvasRegion create text 550 360 -anchor e \
+    -text "Written by Dr.Christian Fremuth-Paeger and others (c) 1998-2007" \
+    -font -*-lucida--r-narrow--14-*-*-*-p-*-*-*
+
+global GoblinTclPath
+image create photo tclLogo -file [file join $GoblinTclPath tclLogo.gif]
+.trailer.canvasRegion create image 550 190 -image tclLogo -anchor e
+
+image create photo demo -file [file join $GoblinTclPath gobletTitle.gif]
+.trailer.canvasRegion create image 40 190 -image demo -anchor w
+
+bind .trailer <Button-1> {destroy .trailer}
+
+update idletasks

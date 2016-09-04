@@ -1,0 +1,49 @@
+(mixed_integer
+ (rows 1)
+ (columns 2)
+ (size 100)
+ (pivot *)
+ (values *)
+ (rowvis 1)
+ (colvis 1)
+ (configure
+   -source             200000
+   -target             200000
+   -root               200000
+   -xShift             400
+   -yShift             400
+   -xZoom              1.50e+02
+   -yZoom              1.50e+02
+   -legenda            0
+   -displayMode        3
+   -traceLevel         0
+   -logMan             0
+   -logTimers          0
+   -methMinCut         2)
+)
+
+NAME          /home/chris/.goblet/lp4
+OBJSENSE
+  MAX
+OBJNAME
+  OBJ
+ROWS
+ N  OBJ
+ E  r1
+COLUMNS
+    x         OBJ             1.000
+    x         r1              1.000
+    y         OBJ            -1.000
+    y         r1              1.000
+RHS
+    RHS       r1              1.000
+BOUNDS
+ UP BOUND     x               1.000
+ UP BOUND     y               1.000
+ENDATA
+
+NAME          /home/chris/.goblet/lp4
+ LL x         x       
+ XL y         r1      
+ENDATA
+

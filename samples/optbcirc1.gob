@@ -1,0 +1,65 @@
+(digraph
+ (definition
+  (nodes 8 8 0)
+  (arcs 16)
+  (incidences
+   (0
+     24  0 13 17)
+   (1
+     27  3 14 18)
+   (2
+     30  1  4 19)
+   (3
+     29  2  7 16)
+   (4
+     26  5  8 21)
+   (5
+     25  6 11 22)
+   (6
+     28  9 12 23)
+   (7
+     31 10 15 20)
+  )
+  (ucap 1)
+  (lcap 0)
+  (demand 0)
+  (directed 0)
+ )
+ (objectives
+  (commodities 1)
+  (bound *)
+  (length
+   (comm0
+     0 0 1 1 0 0 1 1 0 0
+     0 0 1 1 -1 -1)
+  )
+ )
+ (geometry
+  (metrics 0)
+  (dim 2)
+  (coordinates
+   (axis0
+     20  0 10 30 10 30 20  0)
+   (axis1
+     15 20 15 20  5  0  5  0)
+  )
+ )
+ (layout
+  (style 1)
+  (align *)
+  (interpolate *)
+ )
+ (solutions
+  (label *)
+  (predecessor *)
+  (subgraph 0)
+  (potential *)
+  (colour *)
+ )
+ (configure
+   -legenda            1
+   -arcLabels          4
+   -arcStyle           1
+   -traceLevel         0
+   -traceStep          1)
+)

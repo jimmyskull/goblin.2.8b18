@@ -1,0 +1,996 @@
+
+#-------------------------------------------------------------------------------
+# Module:     menuEdit.tk
+# Activation: Loaded during GOBLET startup
+# Scope:      Edit menu item, bindings, some small dialogs
+#             Handling of transitions between different run modes
+#             Handling of modified objects
+#             Checking node and arc indices
+#-------------------------------------------------------------------------------
+
+
+
+proc MakeEditMenu {} {
+    global ThisGraph
+
+    destroy .mbar.edit.menu
+
+    menu .mbar.edit.menu -tearoff false
+
+    if {[$ThisGraph is mip]} {
+        .mbar.edit.menu add command -label "Reset Basis" \
+            -accelerator Ctrl+X -command ResetLPBasis
+        .mbar.edit.menu add command -label "Pivoting..."\
+            -accelerator Shift+Ctrl+P -command LPPivoting
+        .mbar.edit.menu add command -label "Edit Rows..."\
+            -accelerator Shift+Ctrl+R -command EditLPRow
+        .mbar.edit.menu add command -label "Edit Columns..."\
+            -accelerator Shift+Ctrl+C -command EditLPColumn
+
+        menu .mbar.edit.menu.objsense -tearoff false
+        .mbar.edit.menu add cascade -label "Object Sense"\
+            -menu .mbar.edit.menu.objsense
+        .mbar.edit.menu.objsense add command -label "Minimize"\
+            -command {
+                $ThisGraph minimize
+                PropagateModifications
+            }
+        .mbar.edit.menu.objsense add command -label "Maximize"\
+            -command {
+                $ThisGraph maximize
+                PropagateModifications
+            }
+        .mbar.edit.menu.objsense add command -label "Invert"\
+            -command {
+                $ThisGraph invert
+                PropagateModifications
+            }
+        .mbar.edit.menu.objsense add command -label "Nullify"\
+            -command {
+                $ThisGraph nullify
+                PropagateModifications
+            }
+
+        bind . <Control-a> {}
+        bind . <Control-v> {}
+        bind . <Control-r> {}
+        bind . <Control-i> {}
+        bind . <Control-x> ResetLPBasis
+        bind . <Control-m> {}
+        bind . <Control-e> {}
+        bind . <Control-C> EditLPColumn
+        bind . <Control-X> {}
+        bind . <Control-E> {}
+        bind . <Control-P> LPPivoting
+        bind . <Control-R> EditLPRow
+    } else {
+        if {[$ThisGraph is sparse]} {
+            .mbar.edit.menu add command -label "Insert Arcs" \
+                -accelerator Ctrl+A -command InsertArcs
+            .mbar.edit.menu add command -label "Insert Nodes" \
+                -accelerator Ctrl+V -command AddNodes
+
+            if {![$ThisGraph is bipartite]} {
+                .mbar.edit.menu add command -label "Redirect Arcs" \
+                    -accelerator Ctrl+R -command RedirectArcs
+                bind . <Control-r> {RedirectArcs}
+            } else {
+                bind . <Control-r> {}
+            }
+
+            .mbar.edit.menu add command -label "Delete Nodes / Arcs" \
+                -accelerator Ctrl+X -command DeleteObjects
+
+            menu .mbar.edit.menu.incidences -tearoff false
+            .mbar.edit.menu add cascade -label "Incidences" \
+            -underline 0 -menu .mbar.edit.menu.incidences
+
+            .mbar.edit.menu.incidences add command -label "Reorder Manually" \
+                -accelerator Ctrl+I -command EditIncidences
+            .mbar.edit.menu.incidences add command -label "Planar Ordering" \
+                -command PlanarizeIncidenceOrder
+            .mbar.edit.menu.incidences add command -label "Series-Parallel Ordering" \
+                -command SeriesParallelIncidenceOrder
+            .mbar.edit.menu.incidences add command -label "Shuffle Ordering" \
+                -command ShuffleIncidenceOrder
+            .mbar.edit.menu.incidences add command -label "Extract Order From Drawing" \
+                -command GeometricIncidenceOrder
+
+            menu .mbar.edit.menu.capacities -tearoff false
+            .mbar.edit.menu add cascade -label "Capacities" \
+            -underline 0 -menu .mbar.edit.menu.capacities
+
+            .mbar.edit.menu.capacities add command -label "Replace By Explicit Parallels" \
+                -command ExplicitParallels
+            .mbar.edit.menu.capacities add command -label "Minimum Eulerian Supergraph" \
+                -command ExtendToEulerian
+
+            .mbar.edit.menu add separator
+
+            bind . <Control-a> {InsertArcs}
+            bind . <Control-v> {AddNodes}
+            bind . <Control-x> {DeleteObjects}
+            bind . <Control-i> {EditIncidences}
+        } else {
+            bind . <Control-a> {}
+            bind . <Control-v> {}
+            bind . <Control-r> {}
+            bind . <Control-x> {}
+            bind . <Control-i> {}
+        }
+
+        .mbar.edit.menu add command -label "Move Nodes" \
+            -accelerator Ctrl+M -command MoveNodes
+        .mbar.edit.menu add command -label "Edit Labels" \
+            -accelerator Ctrl+E -command EditLabels
+        .mbar.edit.menu add command -label "Set Colours" \
+            -command SetColours -underline 4
+        .mbar.edit.menu add command -label "Set Predecessors" \
+            -command SetPredecessors -underline 4
+        menu .mbar.edit.menu.constants -tearoff false
+        .mbar.edit.menu add cascade -label "Set Constant Labels" \
+            -underline 9 -menu .mbar.edit.menu.constants
+        .mbar.edit.menu.constants add command -label "Upper Capacity Bounds..." \
+            -underline 0 -command {
+                SetConstantLabelling ucap "Upper Capacity Bounds" [$ThisGraph arc 0 ucap]
+            }
+        .mbar.edit.menu.constants add command -label "Lower Capacity Bounds..." \
+            -underline 6 -command {
+                SetConstantLabelling lcap "Lower Capacity Bounds" [$ThisGraph arc 0 lcap]
+            }
+        .mbar.edit.menu.constants add command -label "Length Labels..." \
+            -underline 0 -command {
+                SetConstantLabelling length "Length Labels" [$ThisGraph arc 0 length]
+            }
+        .mbar.edit.menu.constants add command -label "Node Demands..." \
+            -underline 0 -command {
+                SetConstantLabelling demand "Node Demands" [$ThisGraph node 0 demand]
+            }
+
+        if {![$ThisGraph is sparse]} {
+            menu .mbar.edit.menu.metrics -tearoff false
+            .mbar.edit.menu add cascade -label "Metrics" \
+                -underline 0 -menu .mbar.edit.menu.metrics
+            .mbar.edit.menu.metrics add command -label "Explicit Length Labels" \
+                -underline 9 -command {
+                    $ThisGraph set metric 0
+                    PropagateModifications
+                }
+            .mbar.edit.menu.metrics add command -label "Manhattan Metrics" \
+                -underline 0 -command {
+                    $ThisGraph set metric 1
+                    $ThisGraph set length 0
+                    PropagateModifications
+                }
+            .mbar.edit.menu.metrics add command -label "Euclidian Distances" \
+                -underline 0 -command {
+                    $ThisGraph set metric 2
+                    $ThisGraph set length 0
+                    PropagateModifications
+                }
+            .mbar.edit.menu.metrics add command -label "Maximum Metrics" \
+                -underline 1 -command {
+                    $ThisGraph set metric 3
+                    $ThisGraph set length 0
+                    PropagateModifications
+                }
+            .mbar.edit.menu.metrics add command -label "Spheric Distances" \
+                -underline 0 -command {
+                    $ThisGraph set metric 4
+                    $ThisGraph set length 0
+                    PropagateModifications
+                }
+        }
+
+        .mbar.edit.menu add separator
+        .mbar.edit.menu add command -label "Delete Solutions..." \
+            -accelerator Shift+Ctrl+X \
+            -command {source [file join $GoblinTclPath editDelete.tk]}
+
+        menu .mbar.edit.menu.extractPredecessors -tearoff false
+        .mbar.edit.menu add cascade -label "Extract Predecessors" \
+            -underline 9 -menu .mbar.edit.menu.extractPredecessors
+        .mbar.edit.menu.extractPredecessors add command \
+            -label "Trees From Subgraph" -underline 0 -command {
+                if {[catch {$ThisGraph extract trees} result]} {
+                    AcknowledgementMessage $result
+                } else {
+                    set goblinPredecessors 1
+                    PropagateModifications
+                }
+            }
+        .mbar.edit.menu.extractPredecessors add command \
+            -label "Cycles From Subgraph" -underline 0 -command {
+                if {[catch {$ThisGraph extract cycles} result]} {
+                    AcknowledgementMessage $result
+                } else {
+                    set goblinPredecessors 1
+                    PropagateModifications
+                }
+            }
+        .mbar.edit.menu.extractPredecessors add command \
+            -label "1-Matching From Subgraph" -underline 0 -command {
+                if {[catch {$ThisGraph extract matching} result]} {
+                    AcknowledgementMessage $result
+                } else {
+                    set goblinPredecessors 1
+                    PropagateModifications
+                }
+            }
+        .mbar.edit.menu.extractPredecessors add command \
+            -label "Edge Cover From Subgraph" -underline 0 -command {
+                if {[catch {$ThisGraph extract edgecover} result]} {
+                    AcknowledgementMessage $result
+                } else {
+                    set goblinPredecessors 1
+                    PropagateModifications
+                }
+            }
+
+        menu .mbar.edit.menu.extractNodeColours -tearoff false
+        .mbar.edit.menu add cascade -label "Extract Node Colours" \
+            -underline 9 -menu .mbar.edit.menu.extractNodeColours
+        .mbar.edit.menu.extractNodeColours add command \
+            -label "Bipartition From Finite Distance Labels" -underline 0 -command {
+                if {[catch {$ThisGraph extract cut} result]} {
+                    AcknowledgementMessage $result
+                } else {
+                    set goblinNodeColours 2
+                    PropagateModifications
+                }
+            }
+        .mbar.edit.menu.extractNodeColours add command \
+            -label "Bipartition From Even Distance Labels" -underline 0 -command {
+                if {[catch {$ThisGraph extract bipartition} result]} {
+                    AcknowledgementMessage $result
+                } else {
+                    set goblinNodeColours 2
+                    PropagateModifications
+                }
+            }
+        .mbar.edit.menu.extractNodeColours add command \
+            -label "From Partition Data Structure" -underline 0 -command {
+                if {[catch {$ThisGraph extract colours} result]} {
+                    AcknowledgementMessage $result
+                } else {
+                    set goblinNodeColours 2
+                    PropagateModifications
+                }
+            }
+
+        menu .mbar.edit.menu.randomize -tearoff false
+        .mbar.edit.menu add cascade -label "Randomize" \
+        -underline 0 -menu .mbar.edit.menu.randomize
+
+        .mbar.edit.menu.randomize add command -label "Add Arcs..." -underline 7 \
+            -command AddRandomArcs
+        .mbar.edit.menu.randomize add command -label "Add Eulerian Cycle..." -underline 10 \
+            -command AddEulerianCycle
+        .mbar.edit.menu.randomize add command -label "Make Graph Regular..."  -underline 0 \
+            -command RandRegular
+        .mbar.edit.menu.randomize add command -label "Random Generator..." \
+            -accelerator Shift+Ctrl+R \
+            -command {source [file join $GoblinTclPath composeRandom.tk]}
+
+        bind . <Control-m> {MoveNodes}
+        bind . <Control-e> {EditLabels}
+        bind . <Control-X> {source [file join $GoblinTclPath editDelete.tk]}
+        bind . <Control-P> {}
+        bind . <Control-R> {source [file join $GoblinTclPath composeRandom.tk]}
+    }
+
+    .mbar.edit.menu add separator
+    .mbar.edit.menu add command -label "Undo Changes" \
+        -accelerator Ctrl+Z -command UndoChanges
+    .mbar.edit.menu add command -label "Redo Changes" \
+        -accelerator Ctrl+Y -command RedoChanges
+
+    bind . <Control-y> {RedoChanges}
+    bind . <Control-z> {UndoChanges}
+}
+
+proc SetConstantLabelling {goshLabel textLabel proposedConstant} {
+    global ThisGraph WDConstant SetConstant SetGoshLabel
+
+    set SetGoshLabel $goshLabel
+    set SetConstant $proposedConstant
+    set WDConstant .assignConstant
+
+    destroy $WDConstant
+    toplevel $WDConstant
+    wm withdraw $WDConstant
+    wm title $WDConstant "GOBLIN Prompt"
+
+    frame $WDConstant.frame
+    pack $WDConstant.frame -padx 2m -pady 3m -side top -anchor w
+
+
+    label $WDConstant.frame.text -text "$textLabel:  "
+    entry $WDConstant.frame.entry -textvariable SetConstant \
+        -bg white -width 8
+    pack $WDConstant.frame.text $WDConstant.frame.entry \
+        -side left -fill x -expand 1
+    bind $WDConstant.frame.entry <Return> {
+        if {[catch {$ThisGraph set $SetGoshLabel $SetConstant}]==0} {
+            PropagateModifications
+            destroy .assignConstant
+        } else {
+            PostStatusInfo "Failed to assign the constant \"$SetConstant\""
+        }
+    }
+
+    focus $WDConstant.frame.entry
+
+    bind $WDConstant <FocusOut> {
+        if {[winfo exists .assignConstant]} {
+            raise .assignConstant .
+        }
+    }
+
+    bind . <FocusIn> {
+        if {[winfo exists .assignConstant]} {
+            raise .assignConstant .
+        }
+    }
+
+    after 500 {AdjustWithRootWindow $WDConstant}
+    after 500 {wm resizable $WDConstant 0 0}
+}
+
+proc PlanarizeIncidenceOrder {} {
+    CallSolver {Planar embedding} {$ThisGraph incidences planarize} {
+        PostSolverMessage "Graph has been combinatorially embedded"
+    } "0" {
+        global goblinArcColours
+        set goblinArcColours 1
+        PostSolverMessage "Graph is non-planar"
+    }
+}
+
+proc SeriesParallelIncidenceOrder {} {
+    CallWithSourceAndTarget {
+        CallSolver {Series parallel embedding} {
+            $ThisGraph series-parallel -source [$ThisGraph source] \
+               -target [$ThisGraph target] -embedding -minor
+        } {
+            PostSolverMessage "Graph has been combinatorially embedded"
+        } "0" {
+            global goblinArcColours
+            set goblinArcColours 1
+            PostSolverMessage "Graph is not series-parallel"
+        }
+    } "Source Node (optional)" "Target Node (optional)"
+}
+
+proc ShuffleIncidenceOrder {} {
+    CallSolver {Shuffle incidences} {$ThisGraph incidences randomize} {
+        PostSolverMessage "Incidence lists have been shuffled"
+    }
+}
+
+proc GeometricIncidenceOrder {} {
+    CallSolver {Extract embedding} {$ThisGraph incidences geometric} {
+        PostSolverMessage "Incidence lists have been synchronized with drawing"
+    }
+}
+
+proc ResetMode {nextMode} {
+    global Mode StartNode ThisArcIndex2 MoveNode MoveArc LabelNode \
+        ActiveDialog c
+
+    DestroyBalloon
+
+    if {[string equal $Mode "insert arcs"] || \
+        [string equal $Mode "add bend nodes"]} \
+    {
+        if {$ThisArcIndex2 != ""} {
+            $c delete $ThisArcIndex2
+            set ThisArcIndex2 ""
+        }
+
+        set StartNode ""
+    }
+
+    if {[string equal $Mode "align label"]} {
+        set LabelNode ""
+    }
+
+    if {[string equal $Mode "move nodes"]} {
+        set MoveNode ""
+        set MoveArc ""
+    }
+
+    if {[string equal $Mode "change labels"]} {
+        UploadArcLabels
+        UploadNodeLabels
+    }
+
+    set Mode $nextMode
+}
+
+proc InsertArcs {} {
+    if {![goblin solver idle]} {return}
+
+    ResetMode "insert arcs"
+    InitEditor
+    MakeHelp "(L) select start node  (R) add bend nodes"
+}
+
+proc ResetLPBasis {} {
+    if {![goblin solver idle]} {return}
+
+    global ThisGraph
+
+    $ThisGraph reset
+    PropagateModifications
+    PostStatusInfo "Basis set to lower variable bounds"
+}
+
+proc CheckLpVar {} {
+    global ThisGraph DialogPar
+
+    set k [$ThisGraph #variables]
+    for {set i 0} {$i<$k &&
+        $DialogPar("LpVarLabel")!=[$ThisGraph variable $i label]} {incr i} {}
+    if {$i==$k} {
+        PostStatusInfo "variable label \"$DialogPar("LpVarLabel")\" not found"
+        return -1
+    } else {
+        return $i
+    }
+}
+
+proc CheckLpRow {} {
+    global ThisGraph DialogPar
+
+    set k [$ThisGraph #rows]
+    if {$DialogPar("LpRowLabel")==""} {return [expr [CheckLpVar]+$k]}
+
+    for {set i 0} {$i<$k &&
+        $DialogPar("LpRowLabel")!=[$ThisGraph row $i label]} {incr i} {}
+    if {$i==$k} {
+        PostStatusInfo "row label \"$DialogPar("LpRowLabel")\" not found"
+        return -1
+    } else {
+        return $i
+    }
+}
+
+proc LPPivoting {} {
+    global GoblinTclPath
+
+    source [file join $GoblinTclPath editPivot.tk]
+}
+
+proc EditLPRow {} {
+    global GoblinTclPath
+
+    source [file join $GoblinTclPath editRow.tk]
+}
+
+proc EditLPColumn {} {
+    global GoblinTclPath
+
+    source [file join $GoblinTclPath editVar.tk]
+}
+
+proc AddNodes {} {
+    if {![goblin solver idle]} {return}
+
+    ResetMode "insert nodes"
+    InitEditor
+
+    global ThisGraph
+    if {![$ThisGraph is bipartite]} {
+        MakeHelp "(L) place new node"
+    } else {
+        MakeHelp "(L) place new node  (R) Move to other component"
+    }
+}
+
+proc QualifiedNode {x} {
+    global ThisGraph
+    if {$x=="*"} {return 1}
+    if {$x=="" || [catch {expr int($x)}] || $x!=[expr int($x)]} {
+        PostStatusInfo "node index \"$x\" not accepted"
+        return 0
+    }
+    if {[expr $x<[$ThisGraph #nodes] && $x>=0]} {
+        return 1
+    } else {
+        PostStatusInfo "node index \"$x\" not accepted"
+        return 0
+    }
+}
+
+proc QualifiedArc {x} {
+    global ThisGraph
+
+    if {$x=="*"} {return 1}
+    if {$x=="" || [catch {expr int($x)}] || $x!=[expr int($x)]} {
+        PostStatusInfo "arc index \"$x\" not accepted"
+        return 0
+    }
+    if {[expr $x<2*[$ThisGraph #arcs] && $x>=0]} {
+        return 1
+    } else {
+        PostStatusInfo "arc index \"$x\" not accepted"
+        return 0
+    }
+}
+
+proc QualifiedInt {x lower upper} {
+    if {$x=="" || [catch {expr int($x)}] || $x!=[expr int($x)] \
+            || ($upper!="*" && $x>$upper) || ($lower!="*" && $x<$lower)} {
+        PostStatusInfo "value \"$x\" not accepted"
+        return 0
+    } else {
+        return 1
+    }
+}
+
+proc QualifiedNodeAttrib {} {
+    global ThisDemand ThisDistance ThisColour ThisPotential ThisPredecessor \
+        ThisNode ThisGraph
+
+    if {$ThisNode == ""} {return 1}
+
+    set ret 1
+    set gotDemand    [scan $ThisDemand    "%g" dummy]
+    set gotDistance  [scan $ThisDistance  "%g" dummy]
+    set gotPotential [scan $ThisPotential "%g" dummy]
+
+    if {!$gotDemand} {set ret 0}
+    if {$ThisDistance!="*" && !$gotDistance} {set ret 0}
+    if {$ThisColour!="*" && ![QualifiedNode $ThisColour]} {set ret 0}
+    if {!$gotPotential} {set ret 0}
+    if {$ThisPredecessor!="*" && (![QualifiedArc $ThisPredecessor] || \
+        $ThisNode!=[$ThisGraph arc $ThisPredecessor head])} {set ret 0}
+
+    if {$ret==0} {
+        PostStatusInfo "invalid node attributes"
+    } else {
+        PostStatusInfo ""
+    }
+
+    return $ret
+}
+
+proc QualifiedArcAttrib {} {
+    global ThisLength ThisUpper ThisLower ThisSubgraph ThisArc ThisEdgeColour \
+        ThisGraph
+
+    if {$ThisArc == ""} {return 1}
+
+    set ret 1
+    set gotLength    [scan $ThisLength    "%g" dummy]
+    set gotUpper     [scan $ThisUpper     "%g" dummy]
+    set gotLower     [scan $ThisLower     "%g" dummy]
+    set gotSubgraph  [scan $ThisSubgraph  "%g" dummy]
+
+    if {$ThisLength!="*" && !$gotLength} {set ret 0}
+    if {$ThisUpper!="*" && !$gotUpper} {set ret 0}
+    if {$ret==1 && $ThisUpper!="*" && [expr {$ThisUpper<0}]} {set ret 0}
+    if {!$gotLower || [expr {$ThisLower<0}]} {set ret 0}
+    if {$ret==1 && $ThisUpper!="*" && [expr $ThisLower>$ThisUpper]} {set ret 0}
+    if {!$gotSubgraph} {set ret 0}
+    if {$ThisEdgeColour!="*" && $ThisEdgeColour>=[$ThisGraph #arcs]} {set ret 0}
+
+    if {$ret==1 && $ThisUpper!="*" && [expr $ThisSubgraph>$ThisUpper]} {
+        set ThisSubgraph $ThisUpper
+    }
+    if {$ret==1 && [expr {$ThisSubgraph<$ThisLower}]} {
+        set ThisSubgraph $ThisLower
+    }
+
+    if {$ret==0} {
+        PostStatusInfo "invalid arc attributes"
+    } else {
+        PostStatusInfo ""
+    }
+
+    return $ret
+}
+
+proc MoveNodes {} {
+    ResetMode "move nodes"
+    InitEditor
+    MakeHelp "(L) drag and drop object"
+}
+
+proc EditLabels {} {
+    global ThisNode ThisArc GoblinTclPath MaxDisplayArcs ThisGraph CanvasRegion
+
+    ResetMode "change labels"
+
+    if {[$ThisGraph #arcs]<=$MaxDisplayArcs && [winfo exists $CanvasRegion]} {
+        InitEditor
+        MakeHelp "(L) select object"
+    }
+
+    if {[$ThisGraph #nodes]>0} {
+        UploadNodeLabels
+
+        if {$ThisNode == ""} {
+            set ThisNode 0
+        }
+
+        DownloadNodeLabels $ThisNode
+        source [file join $GoblinTclPath editNodeLabels.tk]
+    }
+
+    if {[$ThisGraph #arcs]>0} {
+        UploadArcLabels
+
+        if {$ThisArc == ""} {
+            set ThisArc 0
+        }
+
+        DownloadArcLabels $ThisArc
+        source [file join $GoblinTclPath editArcLabels.tk]
+    }
+}
+
+proc DownloadNodeLabels {v} {
+    global ThisGraph ThisNode ThisDemand ThisDistance ThisColour \
+        ThisPotential ThisPredecessor ThisXCoordinate ThisYCoordinate
+
+    if {$v != ""} {
+        set ThisNode $v
+        set ThisDemand [$ThisGraph node $v demand]
+        set ThisColour [$ThisGraph node $v colour]
+        set ThisDistance [$ThisGraph node $v distance]
+        set ThisPotential [$ThisGraph node $v potential]
+        set ThisPredecessor [$ThisGraph node $v predecessor]
+        set ThisXCoordinate [$ThisGraph node $v cx]
+        set ThisYCoordinate [$ThisGraph node $v cy]
+    } else {
+        set ThisNode ""
+        set ThisDemand ""
+        set ThisColour ""
+        set ThisDistance ""
+        set ThisPotential ""
+        set ThisPredecessor ""
+        set ThisXCoordinate ""
+        set ThisYCoordinate ""
+    }
+}
+
+proc DownloadArcLabels {a} {
+    global ThisGraph ThisArc ThisUpper ThisLower ThisLength ThisSubgraph \
+        ThisHead ThisTail ThisEdgeColour
+
+    if {$a != ""} {
+        set ThisArc $a
+        set ThisUpper [$ThisGraph arc [expr {2*$a}] ucap]
+        set ThisLower [$ThisGraph arc [expr {2*$a}] lcap]
+        set ThisLength [$ThisGraph arc [expr {2*$a}] length]
+        set ThisOrientation [$ThisGraph arc [expr {2*$a}] orientation]
+        set ThisSubgraph [$ThisGraph arc [expr {2*$a}] subgraph]
+        set ThisEdgeColour [$ThisGraph arc [expr {2*$a}] colour]
+        set ThisHead "Head: [$ThisGraph arc [expr {2*$ThisArc}] head]"
+        set ThisTail "Tail: [$ThisGraph arc [expr {2*$ThisArc}] tail]"
+    } else {
+        set ThisArc ""
+        set ThisUpper ""
+        set ThisLower ""
+        set ThisLength ""
+        set ThisOrientation ""
+        set ThisSubgraph ""
+        set ThisEdgeColour ""
+        set ThisHead ""
+        set ThisTail ""
+    }
+}
+
+proc UploadNodeLabels {} {
+    global ThisGraph ThisNode ThisDemand ThisDistance ThisColour \
+        ThisPotential ThisPredecessor
+
+    if {[info exists ThisNode] && $ThisNode != ""} {
+        set changed 0
+
+        if {[$ThisGraph node $ThisNode demand] != $ThisDemand} {
+            $ThisGraph node $ThisNode set demand $ThisDemand
+            set changed 1
+        }
+
+        if {[$ThisGraph node $ThisNode distance] != $ThisDistance} {
+            $ThisGraph node $ThisNode set distance $ThisDistance
+            set changed 1
+        }
+
+        if {[$ThisGraph node $ThisNode potential] != $ThisPotential} {
+            $ThisGraph node $ThisNode set potential $ThisPotential
+            set changed 1
+        }
+
+        if {[$ThisGraph node $ThisNode colour] != $ThisColour} {
+            $ThisGraph node $ThisNode set colour $ThisColour
+            set changed 1
+        }
+
+        if {[$ThisGraph node $ThisNode predecessor] != $ThisPredecessor} {
+            $ThisGraph node $ThisNode set predecessor $ThisPredecessor
+            set changed 1
+        }
+
+        if {$changed} {PropagateModifications}
+    }
+}
+
+proc UploadArcLabels {} {
+    global ThisGraph ThisArc ThisUpper ThisLower ThisLength ThisSubgraph \
+        ThisEdgeColour
+
+    if {[info exists ThisArc] && $ThisArc != ""} {
+        set changed 0
+
+        if {[$ThisGraph arc [expr {2*$ThisArc}] ucap] != $ThisUpper} {
+            $ThisGraph arc [expr {2*$ThisArc}] set ucap $ThisUpper
+            set changed 1
+        }
+
+        if {[$ThisGraph arc [expr {2*$ThisArc}] lcap] != $ThisLower} {
+            $ThisGraph arc [expr {2*$ThisArc}] set lcap $ThisLower
+            set changed 1
+        }
+
+        if {[$ThisGraph arc [expr {2*$ThisArc}] length] != $ThisLength} {
+            $ThisGraph arc [expr {2*$ThisArc}] set length $ThisLength
+            set changed 1
+        }
+
+        if {[$ThisGraph arc [expr {2*$ThisArc}] subgraph] != $ThisSubgraph} {
+            $ThisGraph arc [expr {2*$ThisArc}] set subgraph $ThisSubgraph
+            set changed 1
+        }
+
+        if {[$ThisGraph arc [expr {2*$ThisArc}] colour] != $ThisEdgeColour} {
+            $ThisGraph arc [expr {2*$ThisArc}] set colour $ThisEdgeColour
+            set changed 1
+        }
+
+        if {$changed} {PropagateModifications}
+    }
+}
+
+proc UploadAndDownloadLabels {v a} {
+    # All editor commands will preserve synchronicity with the label editor
+    # forms. Consistent labels in the forms are uploaded, inconsistent data
+    # sets are disposed.
+
+    if {[QualifiedNodeAttrib]} {UploadNodeLabels}
+    DownloadNodeLabels $v
+
+    if {[QualifiedArcAttrib]} {UploadArcLabels}
+    DownloadArcLabels $a
+}
+
+proc SetColours {} {
+    ResetMode "set colours"
+    InitEditor
+    MakeHelp "(L) decrease  (R) increase colour index"
+}
+
+proc SetPredecessors {} {
+    ResetMode "set predecessors"
+    InitEditor
+    MakeHelp "(L) select node"
+}
+
+proc RedirectArcs {} {
+    if {![goblin solver idle]} {return}
+
+    global ThisGraph
+
+    ResetMode "redirect arcs"
+    InitEditor
+    if {![$ThisGraph is directed]} {
+        MakeHelp "(L) flip direction  (R) enable/disable direction"
+    } else {
+        MakeHelp "(L) flip direction"
+    }
+}
+
+proc ExplicitParallels {} {
+    if {![goblin solver idle]} {return}
+
+    global Mode ThisGraph
+    $ThisGraph generate parallels
+    set Mode "display object"
+    PropagateModifications
+}
+
+
+proc ExtendToEulerian {} {
+    CallSolver {Minimum Eulerian Supergraph} {$ThisGraph postman -adjust} {
+        global goblinSubgraph
+        set goblinSubgraph 3
+        PostSolverMessage "Total edge weight is $SolverData(result)"
+    }
+}
+
+proc DeleteObjects {} {
+    if {![goblin solver idle]} {return}
+
+    ResetMode "delete objects"
+    InitEditor
+    MakeHelp "(L) delete object  (R) contract arc"
+}
+
+proc EditIncidences {} {
+    if {![goblin solver idle]} {return}
+
+    ResetMode "sort incidences"
+    InitEditor
+    MakeHelp "(L) select node"
+}
+
+proc AddRandomArcs {} {
+    global ThisGraph NArcs GoCommand UploadCommand WDInput WD
+
+    set NArcs 1
+    set GoCommand {
+        if {[QualifiedInt $NArcs 1 50000]} {
+            $ThisGraph generate arcs $NArcs
+            PropagateModifications
+        }
+    }
+    set UploadCommand {}
+
+    DisplayInputDialog "Add Random Arcs" "AddRandomArcs" "Generate" "Cancel" {
+        label $WDInput.frame.nText -text "Number of Arcs:  " -anchor w
+        grid $WDInput.frame.nText -in $WDInput.frame \
+            -row 0 -column 0 -rowspan 1 -columnspan 1 -sticky news
+        entry $WDInput.frame.nArcs -textvariable NArcs -bg white -width 5
+        grid $WDInput.frame.nArcs -in $WDInput.frame \
+            -row 0 -column 1 -rowspan 1 -columnspan 1 -sticky news
+
+        grid columnconfig $WDInput.frame 0 -weight 1 -minsize 0
+        grid columnconfig $WDInput.frame 1 -weight 1 -minsize 0
+
+        bind $WDInput.frame.nArcs <Return> $GoCommand
+    }
+
+    focus $WD(AddRandomArcs).frame.nArcs
+}
+
+proc AddEulerianCycle {} {
+    global ThisGraph Length GoCommand UploadCommand WDInput WD
+
+    set Length 0
+    set GoCommand {
+        if {[QualifiedInt $Length 2 50000]} {
+            $ThisGraph generate eulerian $Length
+            PropagateModifications
+        }
+    }
+    set UploadCommand {}
+
+    DisplayInputDialog "Add Eulerian Cycle" "AddEulerianCycle" "Generate" "Cancel" {
+        label $WDInput.frame.lengthText -text "Cycle Length:  " -anchor w
+        grid $WDInput.frame.lengthText -in $WDInput.frame \
+            -row 0 -column 0 -rowspan 1 -columnspan 1 -sticky news
+        entry $WDInput.frame.length -textvariable Length -bg white -width 5
+        grid $WDInput.frame.length -in $WDInput.frame \
+            -row 0 -column 1 -rowspan 1 -columnspan 1 -sticky news
+
+        grid columnconfig $WDInput.frame 0 -weight 1 -minsize 0
+        grid columnconfig $WDInput.frame 1 -weight 1 -minsize 0
+
+        bind $WDInput.frame.length <Return> $GoCommand
+    }
+
+    focus $WD(AddEulerianCycle).frame.length
+}
+
+proc RandRegular {} {
+    global ThisGraph ThisDeg GoCommand UploadCommand WDInput WD
+
+    set ThisDeg 1
+    set GoCommand {
+        if {[QualifiedInt $ThisDeg 1 50000]} {
+            $ThisGraph generate regular $ThisDeg
+            PropagateModifications
+        }
+    }
+    set UploadCommand {}
+
+    DisplayInputDialog "Regular Graph" "RandRegular" "Generate" "Cancel" {
+        label $WDInput.frame.degText -text "Node Degree:  " -anchor w
+        grid $WDInput.frame.degText -in $WDInput.frame \
+            -row 0 -column 0 -rowspan 1 -columnspan 1 -sticky news
+        entry $WDInput.frame.deg -textvariable ThisDeg -bg white -width 5
+        grid $WDInput.frame.deg -in $WDInput.frame \
+            -row 0 -column 1 -rowspan 1 -columnspan 1 -sticky news
+
+        grid columnconfig $WDInput.frame 0 -weight 1 -minsize 0
+        grid columnconfig $WDInput.frame 1 -weight 1 -minsize 0
+
+        bind $WDInput.frame.deg <Return> $GoCommand
+    }
+
+    focus $WD(RandRegular).frame.deg
+}
+
+proc PropagateModifications {} {
+    global Unchanged FileName Log FirstBackup ThisBackup LastBackup \
+        CanvasRegion Mode ThisGraph BackupLevel
+
+    if {$ThisBackup==$LastBackup} {
+        incr ThisBackup
+        incr LastBackup
+        if {[expr $LastBackup-$FirstBackup-1]==$BackupLevel} {
+            file delete -force $FileName.backup$FirstBackup.gob
+            incr FirstBackup
+        }
+    } else {
+        incr ThisBackup
+        for {set i $ThisBackup} {$i<$LastBackup} {incr i} {
+            file delete -force $FileName.backup$i.gob
+        }
+    }
+
+    set Unchanged 0
+    wm title . "GOBLET: [file tail $FileName] (modified)"
+    UpdateSystemInfo
+
+    if {[$ThisGraph is mip] || [$ThisGraph #nodes]>0} {
+        $ThisGraph write $FileName.backup$ThisBackup.gob
+    }
+
+    if {![$ThisGraph is mip]} {
+        # This will update the node and arc attribute windows
+        global ThisArc ThisNode
+        DownloadNodeLabels $ThisNode
+        DownloadArcLabels $ThisArc
+    }
+
+    if {[winfo exists $CanvasRegion] && \
+        ($Mode=="display object" || $Mode=="navigate")} {InitDisplay}
+
+    if {[winfo exists $Log]} {LoadLogFile}
+
+    UpdateActiveDialogs
+}
+
+proc UndoChanges {} {
+    global FirstBackup ThisBackup FileName ThisGraph Unchanged SavedBackup
+
+    if {$ThisBackup>$FirstBackup} {
+        incr ThisBackup -1
+        $ThisGraph delete
+        goblinImport $ThisGraph $FileName.backup$ThisBackup.gob gob
+
+        if {$ThisBackup==$SavedBackup} {
+            set Unchanged 1
+            wm title . "GOBLET: [file tail $FileName]"
+        } else {
+            set Unchanged 0
+            wm title . "GOBLET: [file tail $FileName] (modified)"
+        }
+
+        InitDisplay
+    }
+}
+
+proc RedoChanges {} {
+    global ThisBackup LastBackup FileName ThisGraph Unchanged SavedBackup
+
+    if {$ThisBackup<$LastBackup} {
+        incr ThisBackup
+        $ThisGraph delete
+        goblinImport $ThisGraph $FileName.backup$ThisBackup.gob gob
+
+        if {$ThisBackup==$SavedBackup} {
+            set Unchanged 1
+            wm title . "GOBLET: [file tail $FileName]"
+        } else {
+            set Unchanged 0
+            wm title . "GOBLET: [file tail $FileName] (modified)"
+        }
+
+        InitDisplay
+    }
+}

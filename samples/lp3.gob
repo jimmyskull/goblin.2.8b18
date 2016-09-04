@@ -1,0 +1,61 @@
+(mixed_integer
+ (rows 4)
+ (columns 4)
+ (size 100)
+ (pivot *)
+ (values *)
+ (rowvis 1)
+ (colvis 1)
+ (configure
+   -source             200000
+   -target             200000
+   -root               200000
+   -xShift             400
+   -yShift             400
+   -xZoom              1.50e+02
+   -yZoom              1.50e+02
+   -legenda            0
+   -displayMode        3
+   -traceLevel         0
+   -methMinCut         2)
+)
+
+NAME          /home/chris/.goblet/test8
+OBJSENSE
+  MIN
+OBJNAME
+  OBJ
+ROWS
+ N  OBJ
+ G  r1
+ L  r2
+ E  r3
+ E  r4
+COLUMNS
+    x1        OBJ            37.000
+    x1        r1              2.000
+    x2        OBJ           -41.000
+    x2        r3             -3.000
+    x3        OBJ            29.000
+    x3        r4              5.000
+    x4        OBJ           -31.000
+    x4        r2             -7.000
+RHS
+    RHS       r1             13.000
+    RHS       r2             17.000
+    RHS       r3             19.000
+    RHS       r4             23.000
+BOUNDS
+ MI BOUND     x2        -1000000000.000
+ MI BOUND     x3        -1000000000.000
+ MI BOUND     x4        -1000000000.000
+ UP BOUND     x4              0.000
+ENDATA
+
+NAME          /home/chris/.goblet/test8
+ XL x1        r1      
+ XL x2        r3      
+ XL x3        r4      
+ UL x4        x4      
+ENDATA
+

@@ -1,0 +1,116 @@
+(digraph
+ (definition
+  (nodes 25 25 0)
+  (arcs 24)
+  (incidences
+   (0
+      0  2)
+   (1
+     16 18  1)
+   (2
+      4  6  3)
+   (3
+      5)
+   (4
+      8 10  7)
+   (5
+     12 14  9)
+   (6
+     11)
+   (7
+     13)
+   (8
+     15)
+   (9
+     40 42 17)
+   (10
+     20 22 19)
+   (11
+     24 26 21)
+   (12
+     23)
+   (13
+     32 34 25)
+   (14
+     28 30 27)
+   (15
+     29)
+   (16
+     31)
+   (17
+     33)
+   (18
+     36 38 35)
+   (19
+     37)
+   (20
+     39)
+   (21
+     44 46 41)
+   (22
+     43)
+   (23
+     45)
+   (24
+     47)
+  )
+  (ucap 1)
+  (lcap 0)
+  (demand 0)
+  (directed 1)
+ )
+ (objectives
+  (commodities 1)
+  (bound *)
+  (length
+   (comm0
+      0  0  6  6  1  1 11 11  4  4
+      2  2  5  5  6  6  7  7  3  3
+     10 10  6  6)
+  )
+ )
+ (geometry
+  (metrics 0)
+  (dim 2)
+  (coordinates
+   (axis0
+      60  80  15  30  10  15   0  20  10 110
+      65  70  40  80  55  60  50  90  75  80
+      70 115 100 120 110)
+   (axis1
+      0 10 10 20 20 30 30 40 40 20
+     20 30 30 40 40 50 50 50 50 60
+     60 30 30 40 40)
+  )
+ )
+ (layout
+  (style 1)
+  (align *)
+  (interpolate *)
+ )
+ (solutions
+  (label *)
+  (predecessor
+     *  0  2  4  6  8 10 12 14 16
+    18 20 22 24 26 28 30 32 34 36
+    38 40 42 44 46)
+  (subgraph 0)
+  (potential *)
+  (colour
+    0 0 0 1 0 0 2 3 3 0
+    0 0 3 0 0 3 3 3 0 3
+    3 0 3 3 3)
+ )
+ (configure
+   -xShift             405
+   -yShift             405
+   -xZoom              5.7432432e+01
+   -yZoom              1.3310811e+02
+   -arcLabels          4
+   -nodeColours        2
+   -predecessors       0
+   -displayMode        3
+   -traceLevel         2
+   -traceStep          1
+   -logMeth            2)
+)

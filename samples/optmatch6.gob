@@ -1,0 +1,59 @@
+(graph
+ (definition
+  (nodes 6 6 0)
+  (arcs 8)
+  (incidences
+   (0
+      2  0  8)
+   (1
+      4  1 10)
+   (2
+     14  3  6)
+   (3
+      9  5  7)
+   (4
+     12 11)
+   (5
+     15 13)
+  )
+  (ucap 1)
+  (lcap 0)
+  (demand 1)
+  (directed 0)
+ )
+ (objectives
+  (commodities 1)
+  (bound *)
+  (length
+   (comm0
+     0 1 0 2 0 3 5 2)
+  )
+ )
+ (geometry
+  (metrics 0)
+  (dim 2)
+  (coordinates
+   (axis0
+      0  5  5 10 15 15)
+   (axis1
+      5  0 10  5  0 10)
+  )
+ )
+ (layout
+  (style 1)
+  (align *)
+  (interpolate *)
+ )
+ (solutions
+  (label *)
+  (predecessor *)
+  (subgraph 0)
+  (potential *)
+  (colour *)
+ )
+ (configure
+   -arcLabels          4
+   -arcStyle           1
+   -traceLevel         0
+   -traceStep          1)
+)

@@ -1,0 +1,47 @@
+(dense_graph
+ (definition
+  (nodes 6 6 0)
+  (ucap 1)
+  (lcap 0)
+  (demand 1)
+  (directed 0)
+ )
+ (objectives
+  (commodities 1)
+  (bound *)
+  (length
+   (comm0
+     468 901 391 301 106 500 870 691 857 477
+     119 391 509 940  53 395 376 402 399 110
+     864)
+  )
+ )
+ (geometry
+  (metrics 0)
+  (dim 2)
+  (coordinates
+   (axis0
+      5 15 20 15  5  0)
+   (axis1
+      0  0 10 20 20 10)
+  )
+ )
+ (layout
+  (style 1)
+  (align *)
+  (interpolate *)
+ )
+ (solutions
+  (label *)
+  (predecessor *)
+  (subgraph 0)
+  (potential *)
+  (colour *)
+ )
+ (configure
+   -arcLabels          4
+   -subgraph           1
+   -arcStyle           1
+   -traceLevel         0
+   -traceStep          1)
+)

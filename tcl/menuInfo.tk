@@ -1,0 +1,138 @@
+
+#-------------------------------------------------------------------------------
+# Module:     menuInfo.tk
+# Activation: Loaded during GOBLET startup
+# Scope:      Info menu item and bindings
+#
+# Updated:
+#-------------------------------------------------------------------------------
+
+
+
+menu .mbar.info.menu -tearoff false
+.mbar.info.menu add command -label "Problem Statistics..." \
+    -accelerator Shift+Ctrl+I \
+    -command {source [file join $GoblinTclPath infoStatistics.tk]}
+
+if {![catch {goblin size} dummy]} {
+    .mbar.info.menu add command -label "System Ressources..." \
+        -accelerator Shift+Ctrl+J \
+        -command {source [file join $GoblinTclPath infoRessources.tk]}
+    bind . <Control-J> {source [file join $GoblinTclPath infoRessources.tk]}
+}
+
+.mbar.info.menu add command -label "Timers..." \
+    -accelerator Shift+Ctrl+K \
+    -command {source [file join $GoblinTclPath infoTimers.tk]}
+.mbar.info.menu add command -label "Modules..." \
+    -command {source [file join $GoblinTclPath infoModules.tk]}
+.mbar.info.menu add command -label "Authors..." \
+    -command {
+        source [file join $GoblinTclPath infoAuthors.tk]
+        if {![info exists WDAuthors] || ![winfo exists $WDAuthors]} {
+            ShowAuthors
+        } else {
+            UpdateAuthor
+        }
+    }
+.mbar.info.menu add command -label "Bibliography..." \
+    -command {
+        source [file join $GoblinTclPath infoBibliography.tk]
+        if {![info exists WDBibliography] || ![winfo exists $WDBibliography]} {
+            ShowBibliography
+        } else {
+            UpdateBibliography
+        }
+    }
+.mbar.info.menu add command -label "About GOBLET..." \
+    -command AboutGOBLET
+.mbar.info.menu add command -label "About GOBLIN..." \
+    -command AboutGOBLIN
+.mbar.info.menu add command -label "Licence Agreement..." \
+    -command ShowLGPL
+
+proc AboutGOBLET {} {
+    global UploadCommand
+    set UploadCommand {}
+
+    DisplayInputDialog "About GOBLIN" "AboutGOBLIN" "" "Done" {
+        global GoblinVersion
+
+        message $WDInput.frame.msg1 -width 200 -anchor w \
+            -text "GOBLET $GoblinVersion"
+        message $WDInput.frame.msg2 -width 270 -anchor w \
+            -text "Tcl/Tk based Graph Editor and Browser, User Interface of the GOBLIN Graph Library"
+        message $WDInput.frame.msg3 -width 250 -anchor w \
+            -text "(c) 2001-2007"
+        message $WDInput.frame.msg4 -width 220 -anchor w \
+            -text "Dr. Christian Fremuth-Paeger, University of Augsburg, Germany"
+        pack $WDInput.frame.msg1 $WDInput.frame.msg2 $WDInput.frame.msg3 \
+            $WDInput.frame.msg4 -side top -fill x
+    }
+}
+
+proc AboutGOBLIN {} {
+    global UploadCommand
+    set UploadCommand {}
+
+    DisplayInputDialog "About GOBLIN" "AboutGOBLIN" "" "Done" {
+        global GoblinVersion
+
+        message $WDInput.frame.msg1 -width 200 -anchor w \
+            -text "GOBLIN $GoblinVersion" 
+        message $WDInput.frame.msg2 -width 270 -anchor w \
+            -text "A C++ Class Library for Graph Optimization and Network Programming Problems" 
+        message $WDInput.frame.msg3 -width 300 -anchor w \
+            -text "(c) 1998-2007"
+        message $WDInput.frame.msg4 -width 300 -anchor w \
+            -text "Dr. Christian Fremuth-Paeger and others. See reference manual for a list of contributions"
+        pack $WDInput.frame.msg1 $WDInput.frame.msg2 $WDInput.frame.msg3 \
+            $WDInput.frame.msg4 -side top -fill x
+    }
+}
+
+proc ShowLGPL {} {
+    global GoblinTclPath LGPL
+    set LGPL .lgpl
+    destroy $LGPL
+    toplevel $LGPL
+    wm title $LGPL "GOBLIN Licence Agreement"
+
+    set LGPLView $LGPL.view
+    frame $LGPLView
+    pack $LGPLView -side top -fill both -expand yes -padx 1m -pady 1m
+
+    set LGPLText $LGPLView.text
+    set LGPLXScroll $LGPLView.xscroll
+    set LGPLYScroll $LGPLView.yscroll
+    set LGPLDelete $LGPLView.delete
+    text $LGPLText -bg ivory \
+        -relief sunken -borderwidth 2 \
+        -xscrollcommand "$LGPLXScroll set" \
+        -yscrollcommand "$LGPLYScroll set"
+
+    scrollbar $LGPLXScroll -orient horiz -command "$LGPLText xview" -width 3.5m
+    scrollbar $LGPLYScroll -command "$LGPLText yview" -width 3.5m
+    button $LGPLDelete -command {destroy $LGPL} -padx 0 -pady 0 -image del_button 
+
+    grid $LGPLText -in $LGPLView \
+        -row 0 -column 0 -rowspan 1 -columnspan 1 -sticky news
+    grid $LGPLXScroll \
+        -row 1 -column 0 -rowspan 1 -columnspan 1 -sticky news
+    grid $LGPLYScroll \
+        -row 0 -column 1 -rowspan 1 -columnspan 1 -sticky news
+    grid $LGPLDelete \
+        -row 1 -column 1 -rowspan 1 -columnspan 1 -sticky news
+    grid rowconfig    $LGPLView 0 -weight 1 -minsize 0
+    grid columnconfig $LGPLView 0 -weight 1 -minsize 0
+
+    $LGPLText delete 1.0 end
+    set LGPLStream [open [file join $GoblinTclPath LGPL]]
+
+    while {![eof $LGPLStream]} {
+        $LGPLText insert end [read $LGPLStream 1000]
+    }
+}
+
+bind . <Control-I> {source [file join $GoblinTclPath infoStatistics.tk]}
+bind . <Control-K> {source [file join $GoblinTclPath infoTimers.tk]}

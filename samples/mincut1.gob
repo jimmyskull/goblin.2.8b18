@@ -1,0 +1,59 @@
+(digraph
+ (definition
+  (nodes 4 4 0)
+  (arcs 5)
+  (incidences
+   (0
+     4 0)
+   (1
+     1 2 9)
+   (2
+     5 6 8)
+   (3
+     7 3)
+  )
+  (ucap
+    5.000 4.000 2.000 1.000 3.000)
+  (lcap 0.000)
+  (demand 0.000)
+  (directed 1)
+ )
+ (objectives
+  (commodities 1)
+  (bound *)
+  (length
+   (comm0 0.000)
+  )
+ )
+ (geometry
+  (metrics 0)
+  (dim 2)
+  (coordinates
+   (axis0
+      0.000 21.000  0.000 21.000)
+   (axis1
+      0.000  0.000 14.000 14.000)
+  )
+ )
+ (layout
+  (style 0)
+  (align *)
+  (interpolate *)
+ )
+ (solutions
+  (label *)
+  (predecessor *)
+  (subgraph 0.000)
+  (potential *)
+  (colour
+    1 1 0 1)
+ )
+ (configure
+   -arcLabels          1
+   -arcLabels2         2
+   -nodeColours        2
+   -displayMode        3
+   -traceLevel         0
+   -logMeth            2
+   -logRes             2)
+)

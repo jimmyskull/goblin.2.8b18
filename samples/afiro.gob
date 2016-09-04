@@ -1,0 +1,249 @@
+(mixed_integer
+ (rows 27)
+ (columns 37)
+ (size 100)
+ (pivot *)
+ (values *)
+ (rowvis 1)
+ (colvis 1)
+ (configure
+   -source             200000
+   -target             200000
+   -root               200000
+   -xShift             400
+   -yShift             400
+   -xZoom              1.50e+02
+   -yZoom              1.50e+02
+   -legenda            0
+   -displayMode        3
+   -traceLevel         0
+   -logMan             0
+   -logTimers          0
+   -methMinCut         2)
+)
+
+NAME          /home/chris/.goblet/afiro
+OBJSENSE
+  MIN
+OBJNAME
+  OBJ
+ROWS
+ N  OBJ
+ E  R09
+ E  R10
+ L  X05
+ L  X21
+ E  R12
+ E  R13
+ L  X17
+ L  X18
+ L  X19
+ L  X20
+ E  R19
+ E  R20
+ L  X27
+ L  X44
+ E  R22
+ E  R23
+ L  X40
+ L  X41
+ L  X42
+ L  X43
+ L  X45
+ L  X46
+ L  X47
+ L  X48
+ L  X49
+ L  X50
+ L  X51
+COLUMNS
+    X01       OBJ             0.000
+    X01       R09            -1.000
+    X01       R10            -1.060
+    X01       X05             1.000
+    X01       X48             0.301
+    X02       OBJ            -0.400
+    X02       R09             1.000
+    X02       X21            -1.000
+    X03       OBJ             0.000
+    X03       R09             1.000
+    X03       X46            -1.000
+    X04       OBJ             0.000
+    X04       R10             1.000
+    X04       X50             1.000
+    X06       OBJ             0.000
+    X06       R12            -1.000
+    X06       R13            -1.060
+    X06       X17             1.000
+    X06       X49             0.301
+    X07       OBJ             0.000
+    X07       R12            -1.000
+    X07       R13            -1.060
+    X07       X18             1.000
+    X07       X49             0.313
+    X08       OBJ             0.000
+    X08       R12            -1.000
+    X08       R13            -0.960
+    X08       X19             1.000
+    X08       X49             0.313
+    X09       OBJ             0.000
+    X09       R12            -1.000
+    X09       R13            -0.860
+    X09       X20             1.000
+    X09       X49             0.326
+    X10       OBJ             0.000
+    X10       X17            -1.000
+    X10       X45             2.364
+    X11       OBJ             0.000
+    X11       X18            -1.000
+    X11       X45             2.386
+    X12       OBJ             0.000
+    X12       X19            -1.000
+    X12       X45             2.408
+    X13       OBJ             0.000
+    X13       X20            -1.000
+    X13       X45             2.429
+    X14       OBJ            -0.320
+    X14       X21             1.400
+    X14       R12             1.000
+    X15       OBJ             0.000
+    X15       R12             1.000
+    X15       X47            -1.000
+    X16       OBJ             0.000
+    X16       R13             1.000
+    X16       X51             1.000
+    X22       OBJ             0.000
+    X22       R19            -1.000
+    X22       R20            -0.430
+    X22       X27             1.000
+    X22       X46             0.109
+    X23       OBJ            -0.600
+    X23       R19             1.000
+    X23       X44            -1.000
+    X24       OBJ             0.000
+    X24       R19             1.000
+    X24       X48            -1.000
+    X25       OBJ             0.000
+    X25       R19             1.000
+    X25       X45            -1.000
+    X26       OBJ             0.000
+    X26       R20             1.000
+    X26       X50             1.000
+    X28       OBJ             0.000
+    X28       R22            -0.430
+    X28       R23             1.000
+    X28       X40             1.000
+    X28       X47             0.109
+    X29       OBJ             0.000
+    X29       R22            -0.430
+    X29       R23             1.000
+    X29       X41             1.000
+    X29       X47             0.108
+    X30       OBJ             0.000
+    X30       R22            -0.390
+    X30       R23             1.000
+    X30       X42             1.000
+    X30       X47             0.108
+    X31       OBJ             0.000
+    X31       R22            -0.370
+    X31       R23             1.000
+    X31       X43             1.000
+    X31       X47             0.107
+    X32       OBJ             0.000
+    X32       X40            -1.000
+    X32       X45             2.191
+    X33       OBJ             0.000
+    X33       X41            -1.000
+    X33       X45             2.219
+    X34       OBJ             0.000
+    X34       X42            -1.000
+    X34       X45             2.249
+    X35       OBJ             0.000
+    X35       X43            -1.000
+    X35       X45             2.279
+    X36       OBJ            -0.480
+    X36       X44             1.400
+    X36       R23            -1.000
+    X37       OBJ             0.000
+    X37       R23             1.000
+    X37       X49            -1.000
+    X38       OBJ             0.000
+    X38       R22             1.000
+    X38       X51             1.000
+    X39       OBJ            10.000
+    X39       R23             1.000
+    X18       OBJ             0.000
+    X20       OBJ             0.000
+    R12       OBJ             0.000
+    X43       OBJ             0.000
+    X21       OBJ             0.000
+RHS
+    RHS       R09             0.000
+    RHS       R10             0.000
+    RHS       X05            80.000
+    RHS       X21             0.000
+    RHS       R12             0.000
+    RHS       R13             0.000
+    RHS       X17            80.000
+    RHS       X18             0.000
+    RHS       X19             0.000
+    RHS       X20             0.000
+    RHS       R19             0.000
+    RHS       R20             0.000
+    RHS       X27           500.000
+    RHS       X44             0.000
+    RHS       R22             0.000
+    RHS       R23            44.000
+    RHS       X40           500.000
+    RHS       X41             0.000
+    RHS       X42             0.000
+    RHS       X43             0.000
+    RHS       X45             0.000
+    RHS       X46             0.000
+    RHS       X47             0.000
+    RHS       X48             0.000
+    RHS       X49             0.000
+    RHS       X50           310.000
+    RHS       X51           300.000
+ENDATA
+
+NAME          /home/chris/.goblet/afiro
+ XL X01       R09     
+ XL X02       R10     
+ XU X03       X05     
+ XU X04       X21     
+ XL X06       R12     
+ LL X07       X07     
+ LL X08       X08     
+ LL X09       X09     
+ LL X10       X10     
+ LL X11       X11     
+ LL X12       X12     
+ LL X13       X13     
+ XL X14       R13     
+ LL X15       X15     
+ XL X16       R19     
+ XL X22       R20     
+ XU X23       X27     
+ XU X24       X44     
+ LL X25       X25     
+ XL X26       R22     
+ XL X28       R23     
+ LL X29       X29     
+ LL X30       X30     
+ LL X31       X31     
+ LL X32       X32     
+ LL X33       X33     
+ LL X34       X34     
+ LL X35       X35     
+ XU X36       X46     
+ XU X37       X48     
+ LL X38       X38     
+ LL X39       X39     
+ LL X18       X18     
+ LL X20       X20     
+ LL R12       R12     
+ LL X43       X43     
+ LL X21       X21     
+ENDATA
+

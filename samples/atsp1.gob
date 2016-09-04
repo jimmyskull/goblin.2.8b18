@@ -1,0 +1,53 @@
+(dense_digraph
+ (definition
+  (nodes 8 8 0)
+  (ucap 1)
+  (lcap 0)
+  (demand 0)
+  (directed 0)
+ )
+ (objectives
+  (commodities 1)
+  (bound *)
+  (length
+   (comm0
+      0  2 11 10  8  7  6  5  6  0
+      1  8  8  4  6  7  5 12  0 11
+      8 12  3 11 11  9 10  0  1  9
+      8 10 11 11  9  4  0  2 10  9
+     12  8  5  2 11  0 11  9 10 11
+     12 10  9 12  0  3  7 10 10 10
+      6  3  1  0)
+  )
+ )
+ (geometry
+  (metrics 0)
+  (dim 2)
+  (coordinates
+   (axis0
+      0  0  0 10 10 10 20 10)
+   (axis1
+     10 20 30 20 30 10 10  0)
+  )
+ )
+ (layout
+  (style 1)
+  (align *)
+  (interpolate *)
+ )
+ (solutions
+  (label *)
+  (predecessor
+    112   2  20  86  56 122 124   *)
+  (subgraph 0)
+  (potential *)
+  (colour *)
+ )
+ (configure
+   -arcLabels          5
+   -subgraph           0
+   -arcStyle           1
+   -traceLevel         0
+   -traceStep          1
+   -meth1Tree          1)
+)

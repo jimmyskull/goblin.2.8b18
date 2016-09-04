@@ -1,0 +1,74 @@
+(graph
+ (definition
+  (nodes 9 9 0)
+  (arcs 14)
+  (incidences
+   (0
+      2  1)
+   (1
+      0 20 22)
+   (2
+     23 24 26)
+   (3
+     18 21 25 17)
+   (4
+     12 14 16 11)
+   (5
+      3  4 15)
+   (6
+      6  5)
+   (7
+      9 10 19)
+   (8
+      8 13 27  7)
+  )
+  (ucap 1.000)
+  (lcap 0.000)
+  (demand
+    1.000 1.000 1.000 0.000 0.000 1.000 1.000 0.000 1.000)
+  (directed 0)
+ )
+ (objectives
+  (commodities 1)
+  (bound *)
+  (length
+   (comm0
+     8.000 2.000 3.000 9.000 1.000 4.000 4.000 1.000 1.000 2.000
+     1.000 4.000 2.000 3.000)
+  )
+ )
+ (geometry
+  (metrics 0)
+  (dim 2)
+  (coordinates
+   (axis0
+     15.000  0.000  0.000  8.000 22.000 29.000 29.000 12.000 15.000)
+   (axis1
+      0.000  7.000 20.000 12.000 12.000  7.000 20.000 20.000 28.000)
+  )
+ )
+ (layout
+  (model 1)
+  (align *)
+  (thread *)
+ )
+ (solutions
+ )
+ (configure
+   -source             200000
+   -target             200000
+   -root               200000
+   -xShift             400
+   -yShift             400
+   -xZoom              1.50e+02
+   -yZoom              1.50e+02
+   -legenda            0
+   -arcLabels          4
+   -nodeColours        3
+   -displayMode        3
+   -traceLevel         3
+   -threshold          0
+   -logMeth            2
+   -methMinCut         2
+   -methMinCBalFlow    0)
+)

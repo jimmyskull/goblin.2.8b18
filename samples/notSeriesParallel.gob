@@ -1,0 +1,73 @@
+(mixed
+ (definition
+  (nodes 8 8 0)
+  (arcs 12)
+  (incidences
+   (0
+     15 18 16)
+   (1
+     19 22 20)
+   (2
+     23  4  3)
+   (3
+     17 12 11)
+   (4
+      7  2  1)
+   (5
+      0 10  8)
+   (6
+      9  6  5)
+   (7
+     21 14 13)
+  )
+  (ucap 1.000)
+  (lcap 0.000)
+  (demand 0.000)
+  (directed 0)
+ )
+ (objectives
+  (commodities 1)
+  (bound *)
+  (length
+   (comm0
+     34.000 63.000 83.000 92.000 69.000 27.000 59.000 74.000 26.000 36.000
+     16.000 77.000)
+  )
+ )
+ (geometry
+  (metrics 0)
+  (dim 2)
+  (coordinates
+   (axis0
+     30.000 20.000 10.000 20.000  0.000 10.000 10.000 20.000)
+   (axis1
+     10.000 20.000 20.000  0.000 10.000  0.000 10.000 10.000)
+  )
+ )
+ (layout
+  (model 1)
+  (align *)
+  (thread *)
+ )
+ (solutions
+ )
+ (configure
+   -source             200000
+   -target             200000
+   -root               200000
+   -xShift             400
+   -yShift             400
+   -xZoom              1.50e+02
+   -yZoom              1.40e+02
+   -bendSep            2
+   -arrowSize          150
+   -legenda            0
+   -arcLabels          1
+   -nodeColours        2
+   -displayMode        3
+   -traceLevel         3
+   -threshold          0
+   -logMeth            2
+   -methMinCut         2
+   -randGeometry       0)
+)

@@ -1,0 +1,394 @@
+
+#-------------------------------------------------------------------------------
+# Module:     fileExport.tk
+# Activation: Dynamically loaded on user request
+# Scope:      Export filters for graph objects
+#-------------------------------------------------------------------------------
+
+
+proc ExportAndZip {object exportName format type} {
+    global goblinExtension ZipEnabled ZipExtension ZipCommand SystemTmpDir
+
+    if {([string equal $type "canvas"] || [string equal $type "bitmap"]) && ![$object is visible]} {
+        puts "No graphical data found for file export"
+        error "No graphical data found for file export"
+    }
+
+    if {[string equal $type "object"] || [string equal $type "solution"]} {
+        if {[$object is mip]} {
+            $object write $format $exportName
+        } else {
+            ExportObject $object $exportName $format
+        }
+
+        if {$ZipEnabled} {
+            set tmpName [file join $SystemTmpDir "goblin.tmp.$format"]
+            file rename -force $exportName $tmpName
+            eval exec $ZipCommand $tmpName
+            file rename -force \
+                $tmpName$ZipExtension $exportName$ZipExtension
+        }
+    } else {
+        if {[string equal $format "fig"]} {
+            $object export xfig $exportName
+        } else {
+            set tmpName [file join $SystemTmpDir "goblintmp"]
+            $object export xfig $tmpName.fig
+            exec fig2dev -L $format "$tmpName.fig" $tmpName.$format
+            file delete -force "$tmpName.fig"
+            file rename -force "$tmpName.$format" $exportName
+        }
+    }
+}
+
+proc ExportObject {object fileName format} {
+
+    # Native GOBLIN Format
+
+    if {[string equal $format "gob"]} {
+        $object write $fileName
+        return
+    }
+
+
+    # Graphviz dot Format
+
+    if {[string equal $format "dot"]} {
+        $object export dot $fileName
+        return
+    }
+
+
+    if {[$object is mip]} {
+
+        # Standard MPS Format
+
+        if {[string equal $format "mps"]} {
+            $object write mps $fileName
+            return
+        }
+
+        # CPLEX MPS Format
+
+        if {[string equal $format "cplex"]} {
+            $object write cplex $fileName
+            return
+        }
+
+        # CPLEX LP Format
+
+        if {[string equal $format "lp"]} {
+            $object write lp $fileName
+            return
+        }
+
+        # CPLEX MPS Basis
+
+        if {[string equal $format "bas"]} {
+            $object write bas $fileName
+            return
+        }
+
+        error "Unknown Format: $format"
+    }
+
+    # Tcl Library Format
+
+    if {[string equal $format "tcl"]} {
+        set file [open "$fileName" w]
+
+        puts $file "package require Tcl"
+        puts $file "package require struct"
+        puts $file "::struct::graph \$gobName"
+
+        for {set v 0} {$v<[$object #nodes]} {incr v} {
+            puts $file ""
+            puts $file "\$gobName node insert $v"
+            if {![$object constant demand]} {
+                puts $file "\$gobName node set $v -key demand\
+                    [$object node $v demand]"
+            }
+            if {[$object max cx]>0} {
+                puts $file "\$gobName node set $v -key cx\
+                    [$object node $v cx]"
+            }
+            if {[$object max cy]>0} {
+                puts $file "\$gobName node set $v -key cy\
+                    [$object node $v cy]"
+            }
+        }
+
+        for {set a 0} {$a<[$object #arcs]} {incr a} {
+            set a2 [expr {2*$a}]
+            puts $file ""
+            puts $file "\$gobName arc insert\
+                [$object arc $a2 tail] [$object arc $a2 head] $a"
+            if {![$object is directed] && ![$object is undirected]} {
+                puts $file "\$gobName arc set $a -key orientation\
+                    [$object arc $a2 orientation]"
+            }
+            if {![$object constant length]} {
+                puts $file "\$gobName arc set $a -key length\
+                    [$object arc $a2 length]"
+            }
+            if {![$object constant ucap]} {
+                puts $file "\$gobName arc set $a -key ucap\
+                    [$object arc $a2 ucap]"
+            }
+            if {![$object constant lcap]} {
+                puts $file "\$gobName arc set $a -key lcap\
+                    [$object arc $a2 lcap]"
+            }
+        }
+
+        close $file
+        return
+    }
+
+
+    # DIMACS Formats
+
+    if {[string equal $format "edge"]} {
+        set file [open "$fileName" w]
+
+        puts $file "p edge [$object #nodes] [$object #arcs]"
+        for {set a 0} {$a<[$object #arcs]} {incr a} {
+            puts $file "e \
+                [expr [$object arc [expr {2*$a}] tail]+1] \
+                [expr [$object arc [expr {2*$a}] head]+1] \
+                [$object arc [expr {2*$a}] length]"
+        }
+
+        close $file
+        return
+    }
+
+    if {[string equal $format "max"]} {
+        global goblinSource goblinTarget
+
+        set file [open "$fileName" w]
+        set source [$object source]
+        set target [$object target]
+
+        if {$source=="*"} {set source 0}
+        if {$target=="*"} {set target 1}
+
+        puts $file "p max [$object #nodes] [$object #arcs]"
+        puts $file "n [expr $source+1] s"
+        puts $file "n [expr $target+1] t"
+        for {set a 0} {$a<[$object #arcs]} {incr a} {
+            puts $file "a \
+                [expr [$object arc [expr {2*$a}] tail]+1] \
+                [expr [$object arc [expr {2*$a}] head]+1] \
+                [$object arc [expr {2*$a}] ucap]"
+        }
+
+        close $file
+        return
+    }
+
+    if {[string equal $format "min"]} {
+        set file [open "$fileName" w]
+
+        puts $file "p min [$object #nodes] [$object #arcs]"
+        for {set v 0} {$v<[$object #nodes]} {incr v} {
+            if {[$object node $v demand]!=0} {
+                puts $file "n [expr $v+1] [expr -[$object node $v demand]]"
+            }
+        }
+        for {set a 0} {$a<[$object #arcs]} {incr a} {
+            puts $file "a \
+                [expr [$object arc [expr {2*$a}] tail]+1] \
+                [expr [$object arc [expr {2*$a}] head]+1] \
+                [$object arc [expr {2*$a}] lcap] \
+                [$object arc [expr {2*$a}] ucap] \
+                [$object arc [expr {2*$a}] length]"
+        }
+
+        close $file
+        return
+    }
+
+    if {[string equal $format "asn"]} {
+        set file [open "$fileName" w]
+
+        puts $file "p asn [$object #nodes] [$object #arcs]"
+        for {set v 0} {$v<[$object #outer]} {incr v} {
+            puts $file "n [expr $v+1] s"
+        }
+        for {set a 0} {$a<[$object #arcs]} {incr a} {
+            puts $file "a \
+                [expr [$object arc [expr {2*$a}] tail]+1] \
+                [expr [$object arc [expr {2*$a}] head]+1] \
+                [$object arc [expr {2*$a}] length]"
+        }
+
+        close $file
+        return
+    }
+
+    if {[string equal $format "flow"]} {
+        set file [open "$fileName" w]
+
+        puts $file "s [expr int([$object weight])]"
+
+        for {set a 0} {$a<[$object #arcs]} {incr a} {
+        puts $file "f \
+                [expr [$object arc [expr {2*$a}] tail]+1] \
+                [expr [$object arc [expr {2*$a}] head]+1] \
+                [$object arc [expr {2*$a}] subgraph]"
+        }
+
+        close $file
+        return
+    }
+
+    if {[string equal $format "geom"]} {
+        set file [open "$fileName" w]
+
+        puts $file "p min [$object #nodes] 2"
+        for {set v 0} {$v<[$object #nodes]} {incr v} {
+            if {[$object node $v demand]!=0} {
+                puts $file "n [expr $v+1] [$object node $v cx] [$object node $v cy]"
+            }
+    }
+
+        close $file
+        return
+    }
+
+    if {[string equal $format "match"]} {
+        set file [open "$fileName" w]
+
+        puts $file "s [expr int([$object weight])]"
+
+        for {set a 0} {$a<[$object #arcs]} {incr a} {
+            if {[$object arc [expr {2*$a}] subgraph]>0} {
+                puts $file "m \
+                    [expr [$object arc [expr {2*$a}] tail]+1] \
+                    [expr [$object arc [expr {2*$a}] head]+1]"
+            }
+        }
+
+        close $file
+        return
+    }
+
+
+    # TSPLIB Formats
+
+    if {[string equal $format "tsp"]} {
+        if {[$object is undirected] && ![$object is sparse]} {
+            set file [open "$fileName" w]
+
+            puts $file "NAME : [file tail $fileName]"
+            puts $file "COMMENT : File generated by GOBLIN"
+            puts $file "TYPE : TSP"
+            puts $file "DIMENSION : [$object #nodes]"
+
+            if {[$object metric]==0} {
+                puts $file "EDGE_WEIGHT_TYPE : EXPLICIT"
+                puts $file "EDGE_WEIGHT_FORMAT : UPPER_ROW"
+                if {[$object is visible]} {
+                    puts $file "DISPLAY_DATA_TYPE : TWOD_DISPLAY"
+                }
+
+                puts $file "EDGE_WEIGHT_SECTION"
+                for {set i 0} {$i<[expr [$object #nodes]-1]} {incr i} {
+                    for {set j [expr $i+1]} {$j<[$object #nodes]} {incr j} {
+                        puts -nonewline $file "[$object arc [$object adjacency $i $j] length] "
+                    }
+                    puts $file ""
+                }
+
+                if {[$object is visible]} {
+                    puts $file "DISPLAY_DATA_SECTION"
+                    for {set v 0} {$v<[$object #nodes]} {incr v} {
+                        puts $file "[expr $v+1] [$object node $v cx] [$object node $v cy]"
+                    }
+                }
+
+                puts $file "EOF"
+                close $file
+                return
+            }
+
+            if {[$object metric]==1} {puts $file "EDGE_WEIGHT_TYPE : MAN_2D"}
+            if {[$object metric]==2} {puts $file "EDGE_WEIGHT_TYPE : EUC_2D"}
+            if {[$object metric]==3} {puts $file "EDGE_WEIGHT_TYPE : MAX_2D"}
+            if {[$object metric]==4} {puts $file "EDGE_WEIGHT_TYPE : GEO"}
+            puts $file "NODE_COORD_SECTION"
+            for {set v 0} {$v<[$object #nodes]} {incr v} {
+                puts $file "[expr $v+1] [$object node $v cx] [$object node $v cy]"
+            }
+
+            puts $file "EOF"
+
+            close $file
+            return
+        }
+
+        if {[$object is directed] && ![$object is sparse]} {
+            set file [open "$fileName" w]
+
+            puts $file "NAME : [file tail $fileName]"
+            puts $file "COMMENT : File generated by GOBLIN"
+            puts $file "TYPE : ATSP"
+            puts $file "DIMENSION : [$object #nodes]"
+            puts $file "EDGE_WEIGHT_TYPE : EXPLICIT"
+            puts $file "EDGE_WEIGHT_FORMAT : FULL_MATRIX"
+            if {[$object is visible]} {
+                puts $file "DISPLAY_DATA_TYPE : TWOD_DISPLAY"
+            }
+
+            puts $file "EDGE_WEIGHT_SECTION"
+            for {set i 0} {$i<[$object #nodes]} {incr i} {
+                for {set j 0} {$j<[$object #nodes]} {incr j} {
+                    puts -nonewline $file "[$object arc [$object adjacency $i $j] length] "
+                }
+                puts $file ""
+            }
+
+            if {[$object is visible]} {
+                puts $file "DISPLAY_DATA_SECTION"
+                for {set v 0} {$v<[$object #nodes]} {incr v} {
+                    puts $file "[expr $v+1] [$object node $v cx] [$object node $v cy]"
+                }
+            }
+
+            puts $file "EOF"
+
+            close $file
+            return
+        }
+
+        error "Graph type is not supported"
+    }
+
+    if {[string equal $format "tour"]} {
+        set file [open "$fileName" w]
+
+        puts $file "NAME : [file tail $fileName]"
+        puts $file "TYPE : TOUR"
+        puts $file "COMMENT : Generated by GOBLIN (Objective [expr int([$object length])])"
+        puts $file "DIMENSION : [$object #nodes]"
+        puts $file "TOUR_SECTION"
+
+        set v 0
+        set w -1
+
+        while {$w!=0} {
+            puts $file [expr $v+1]
+            for {set w 0} {[$object arc [$object node $w predecessor] tail]!= $v} {incr w} {}
+            set v [$object arc [$object node $w predecessor] head]
+        }
+
+        puts $file "-1"
+        puts $file "EOF"
+
+        close $file
+        return
+    }
+
+    error "Unknown Format: $format"
+}

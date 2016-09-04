@@ -1,0 +1,205 @@
+(mixed_integer
+ (rows 10)
+ (columns 20)
+ (size 100)
+ (pivot *)
+ (values *)
+ (rowvis 1)
+ (colvis 1)
+ (configure
+   -displayMode        3
+   -traceLevel         0
+   -methMinCut         2)
+)
+
+NAME          /home/chris/.goblet/lp3a
+OBJSENSE
+  MIN
+OBJNAME
+  OBJ
+ROWS
+ N  OBJ
+ L  r1
+ L  r2
+ L  r3
+ L  r4
+ L  r5
+ L  r6
+ G  r7
+ L  r8
+ L  r9
+ L  r10
+COLUMNS
+    x1        OBJ          -133.000
+    x1        r5           -214.000
+    x1        r6           -101.000
+    x1        r7            154.000
+    x1        r9            172.000
+    x1        r10           -21.000
+    x2        OBJ          -136.000
+    x2        r2            -20.000
+    x2        r4            169.000
+    x2        r8           -153.000
+    x3        OBJ           -27.000
+    x3        r1           -163.000
+    x3        r2             78.000
+    x3        r6           -205.000
+    x3        r7            186.000
+    x3        r10          -208.000
+    x4        OBJ          -165.000
+    x4        r1            -51.000
+    x4        r3           -183.000
+    x4        r7            241.000
+    x4        r10            -4.000
+    x5        OBJ           -43.000
+    x5        r6             98.000
+    x5        r7           -124.000
+    x5        r9            -22.000
+    x6        OBJ           -85.000
+    x6        r2            175.000
+    x6        r3            -42.000
+    x6        r7             56.000
+    x6        r8              6.000
+    x6        r9             70.000
+    x7        OBJ          -136.000
+    x7        r1            191.000
+    x7        r3           -164.000
+    x7        r4           -159.000
+    x7        r6            201.000
+    x7        r7           -166.000
+    x8        OBJ          -242.000
+    x8        r5            184.000
+    x8        r10          -183.000
+    x9        OBJ           101.000
+    x9        r1           -179.000
+    x9        r2           -221.000
+    x9        r3            -78.000
+    x9        r7            -11.000
+    x9        r8             25.000
+    x9        r9            -62.000
+    x10       OBJ          -171.000
+    x10       r6            194.000
+    x10       r10            86.000
+    x11       OBJ          -112.000
+    x11       r1            -66.000
+    x11       r2           -145.000
+    x11       r3            246.000
+    x11       r5           -245.000
+    x11       r9           -155.000
+    x12       OBJ           223.000
+    x12       r4            131.000
+    x12       r9            -18.000
+    x13       OBJ            60.000
+    x13       r7           -199.000
+    x13       r10           -25.000
+    x14       OBJ           191.000
+    x14       r1            144.000
+    x14       r4           -212.000
+    x14       r8            206.000
+    x14       r10            63.000
+    x15       OBJ           -13.000
+    x15       r1             14.000
+    x15       r5            237.000
+    x15       r8           -129.000
+    x15       r10            36.000
+    x16       OBJ          -176.000
+    x16       r2            129.000
+    x16       r5            120.000
+    x16       r8             43.000
+    x16       r9           -221.000
+    x17       OBJ           210.000
+    x17       r1            123.000
+    x17       r3             51.000
+    x18       OBJ          -176.000
+    x18       r2           -153.000
+    x18       r3            242.000
+    x18       r4           -126.000
+    x18       r5           -188.000
+    x18       r7            103.000
+    x18       r10           167.000
+    x19       OBJ            78.000
+    x19       r3           -181.000
+    x19       r10           137.000
+    x20       OBJ            14.000
+    x20       r2            246.000
+    x20       r3            129.000
+    x20       r4           -126.000
+    x20       r5             45.000
+RHS
+    RHS       r1            167.000
+    RHS       r2            130.000
+    RHS       r3            269.000
+    RHS       r4            372.000
+    RHS       r5            439.000
+    RHS       r6            222.000
+    RHS       r7           -399.000
+    RHS       r8            150.000
+    RHS       r9            190.000
+    RHS       r10            99.000
+RANGES
+    RHS       r2            575.000
+    RHS       r3            797.000
+    RHS       r5            981.000
+    RHS       r6            694.000
+    RHS       r9            677.000
+    RHS       r10           659.000
+BOUNDS
+ LO BOUND     x1           -558.000
+ LO BOUND     x2           -633.000
+ LO BOUND     x3           -498.000
+ UP BOUND     x3            368.000
+ LO BOUND     x4           -203.000
+ UP BOUND     x4            333.000
+ LO BOUND     x5           -610.000
+ UP BOUND     x5            113.000
+ MI BOUND     x6        -1000000000.000
+ MI BOUND     x7        -1000000000.000
+ UP BOUND     x7            284.000
+ MI BOUND     x8        -1000000000.000
+ UP BOUND     x8            246.000
+ LO BOUND     x9           -511.000
+ UP BOUND     x9            390.000
+ MI BOUND     x10       -1000000000.000
+ UP BOUND     x10            81.000
+ LO BOUND     x11          -397.000
+ UP BOUND     x11           255.000
+ MI BOUND     x12       -1000000000.000
+ MI BOUND     x13       -1000000000.000
+ UP BOUND     x13           155.000
+ LO BOUND     x14          -424.000
+ UP BOUND     x14           205.000
+ LO BOUND     x15          -696.000
+ UP BOUND     x15           326.000
+ MI BOUND     x16       -1000000000.000
+ LO BOUND     x17          -392.000
+ MI BOUND     x18       -1000000000.000
+ UP BOUND     x18           249.000
+ MI BOUND     x19       -1000000000.000
+ UP BOUND     x19           498.000
+ LO BOUND     x20          -364.000
+ UP BOUND     x20           269.000
+ENDATA
+
+NAME          /home/chris/.goblet/lp3a
+ UL x1        x10     
+ XU x2        r4      
+ XU x3        r2      
+ UL x4        x11     
+ XU x5        r5      
+ UL x6        x5      
+ UL x7        x7      
+ UL x8        x13     
+ UL x9        x9      
+ XL x10       r6      
+ XU x11       r9      
+ XU x12       r10     
+ LL x13       x3      
+ LL x14       x14     
+ UL x15       x4      
+ LL x16       x15     
+ LL x17       x17     
+ XL x18       r7      
+ XU x19       r3      
+ LL x20       x20     
+ENDATA
+
