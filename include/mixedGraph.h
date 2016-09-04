@@ -49,7 +49,7 @@ public:
     /// \param options  A combination of OPT_MAPPINGS and OPT_SUB
     mixedGraph(abstractMixedGraph& G,TOption options=0) throw();
 
-    ~mixedGraph() throw();
+    virtual ~mixedGraph() throw();
 
     unsigned long   Size() const throw();
     unsigned long   Allocated() const throw();
@@ -81,6 +81,8 @@ public:
 
     lineGraph(abstractMixedGraph& G,TOption = LG_DIRECTED) throw(ERRejected);
 
+    virtual ~lineGraph() throw() {}
+
 };
 
 /// \brief  Subgraph of a given mixed graph induced by a specified node or arc set
@@ -99,6 +101,7 @@ public:
         const indexSet<TArc>&,const TOption = OPT_PARALLELS)
         throw(ERRejected);
 
+    virtual ~inducedSubgraph() throw() {}
 };
 
 
@@ -113,6 +116,7 @@ public:
 
     colourContraction(abstractMixedGraph&,const TOption = 0) throw();
 
+    virtual ~colourContraction() throw() {}
 };
 
 
@@ -128,6 +132,7 @@ public:
     explicitSurfaceGraph(abstractMixedGraph&,nestedFamily<TNode>&,
             TFloat*,TArc*) throw();
 
+    virtual ~explicitSurfaceGraph() throw() {}
 };
 
 
@@ -139,6 +144,7 @@ public:
 
     explicitSubdivision(abstractMixedGraph&,const TOption = 0) throw();
 
+    virtual ~explicitSubdivision() throw() {}
 };
 
 /// @}

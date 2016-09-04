@@ -35,6 +35,7 @@ template <class TItem,class TKey>
 class goblinQueue : public virtual managedObject
 {
 public:
+    virtual ~goblinQueue() throw() {}
 
     virtual unsigned long   Size() const throw() = 0;
 

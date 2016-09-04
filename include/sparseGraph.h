@@ -54,7 +54,7 @@ public:
     /// \param options  A combination of OPT_CLONE, OPT_PARALLELS, OPT_MAPPINGS and OPT_SUB
     graph(abstractMixedGraph& G,TOption options=0) throw();
 
-    ~graph() throw();
+    virtual ~graph() throw();
 
     unsigned long   Size() const throw();
     unsigned long   Allocated() const throw();
@@ -80,6 +80,7 @@ public:
 
     complementaryGraph(abstractMixedGraph& G,TOption = 0) throw(ERRejected);
 
+    virtual ~complementaryGraph() throw() {}
 };
 
 /// @}
@@ -99,6 +100,7 @@ public:
 
     planarLineGraph(abstractMixedGraph& G,TOption = 0) throw(ERRejected);
 
+    virtual ~planarLineGraph() throw() {}
 };
 
 
@@ -115,6 +117,7 @@ public:
 
     vertexTruncation(abstractMixedGraph& _G,TOption = 0) throw(ERRejected);
 
+    virtual ~vertexTruncation() throw() {}
 };
 
 
@@ -138,6 +141,7 @@ public:
 
     facetSeparation(abstractMixedGraph& G,TOptRotation mode = ROT_NONE) throw(ERRejected);
 
+    virtual ~facetSeparation() throw() {}
 };
 
 
@@ -154,6 +158,7 @@ public:
 
     dualGraph(abstractMixedGraph& G,TOption = 0) throw(ERRejected);
 
+    virtual ~dualGraph() throw() {}
 };
 
 
@@ -173,6 +178,7 @@ public:
 
     spreadOutRegular(abstractMixedGraph& G,TOption = 0) throw(ERRejected);
 
+    virtual ~spreadOutRegular() throw() {}
 };
 
 
@@ -186,6 +192,7 @@ public:
 
     TNode Index(TNode,TNode,TNode,TNode,TNode) throw();
 
+    virtual ~tiling() throw() {}
 };
 
 /// @}
@@ -214,7 +221,7 @@ private:
 public:
 
     voronoiDiagram(abstractMixedGraph& _G,const indexSet<TNode>& _Terminals) throw();
-    ~voronoiDiagram() throw();
+    virtual ~voronoiDiagram() throw();
 
     TFloat UpdateSubgraph() throw();
 
@@ -230,6 +237,7 @@ public:
     triangularGraph(TNode cardinality,
         goblinController& thisContext = goblinDefaultContext) throw();
 
+    virtual ~triangularGraph() throw() {}
 };
 
 /// @}
@@ -246,6 +254,8 @@ public:
 
     sierpinskiTriangle(TNode depth,
         goblinController& thisContext = goblinDefaultContext) throw();
+
+    virtual ~sierpinskiTriangle() throw() {}    
 };
 
 
@@ -265,6 +275,7 @@ public:
     openGrid(TNode _k,TNode _l,TOptGrid shape,
         goblinController& thisContext = goblinDefaultContext) throw(ERRejected);
 
+    virtual ~openGrid() throw() {} 
 };
 
 
@@ -287,6 +298,7 @@ public:
     polarGrid(TNode _k,TNode _l,TNode _p,TOptPolar facets,TOptPolar dim,
         goblinController& thisContext = goblinDefaultContext) throw(ERRejected);
 
+    virtual ~polarGrid() throw() {} 
 };
 
 /// @}
@@ -313,6 +325,7 @@ public:
     torusGrid(TNode _k,TNode _l,TOptTorus facets,TOptTorus dim,
         goblinController& thisContext = goblinDefaultContext) throw(ERRejected);
 
+    virtual ~torusGrid() throw() {}
 };
 
 /// @}

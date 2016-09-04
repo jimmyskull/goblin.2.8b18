@@ -291,10 +291,10 @@ TCoeff denseMatrix<TItem,TCoeff>::Coeff(TItem i,TItem j)
 {
     #if defined(_FAILSAVE_)
 
-    if (!this->transp && i>=this->k)  NoSuchIndex("Coeff",i);
-    if (!this->transp && j>=this->l)  NoSuchIndex("Coeff",j);
-    if (this->transp && i>=this->l)   NoSuchIndex("Coeff",i);
-    if (this->transp && j>=this->k)   NoSuchIndex("Coeff",j);
+    if (!this->transp && i>=this->k)  this->NoSuchIndex("Coeff",i);
+    if (!this->transp && j>=this->l)  this->NoSuchIndex("Coeff",j);
+    if (this->transp && i>=this->l)   this->NoSuchIndex("Coeff",i);
+    if (this->transp && j>=this->k)   this->NoSuchIndex("Coeff",j);
 
     #endif
 
@@ -309,10 +309,10 @@ void denseMatrix<TItem,TCoeff>::SetCoeff(TItem i,TItem j,TCoeff a)
 {
     #if defined(_FAILSAVE_)
 
-    if (!this->transp && i>=this->k)  NoSuchIndex("Coeff",i);
-    if (!this->transp && j>=this->l)  NoSuchIndex("Coeff",j);
-    if (this->transp && i>=this->l)   NoSuchIndex("SetCoeff",i);
-    if (this->transp && j>=this->k)   NoSuchIndex("SetCoeff",j);
+    if (!this->transp && i>=this->k)  this->NoSuchIndex("Coeff",i);
+    if (!this->transp && j>=this->l)  this->NoSuchIndex("Coeff",j);
+    if (this->transp && i>=this->l)   this->NoSuchIndex("SetCoeff",i);
+    if (this->transp && j>=this->k)   this->NoSuchIndex("SetCoeff",j);
 
     if (a>=InfFloat || a<=-InfFloat)
         this->Error(ERR_RANGE,"SetCoeff","Finite matrix coefficients required");
@@ -388,10 +388,10 @@ TCoeff sparseMatrix<TItem,TCoeff>::Coeff(TItem i,TItem j)
 {
     #if defined(_FAILSAVE_)
 
-    if (!this->transp && i>=this->k)  NoSuchIndex("Coeff",i);
-    if (!this->transp && j>=this->l)  NoSuchIndex("Coeff",j);
-    if (this->transp && i>=this->l)   NoSuchIndex("Coeff",i);
-    if (this->transp && j>=this->k)   NoSuchIndex("Coeff",j);
+    if (!this->transp && i>=this->k)  this->NoSuchIndex("Coeff",i);
+    if (!this->transp && j>=this->l)  this->NoSuchIndex("Coeff",j);
+    if (this->transp && i>=this->l)   this->NoSuchIndex("Coeff",i);
+    if (this->transp && j>=this->k)   this->NoSuchIndex("Coeff",j);
 
     #endif
 
@@ -406,10 +406,10 @@ void sparseMatrix<TItem,TCoeff>::SetCoeff(TItem i,TItem j,TCoeff a)
 {
     #if defined(_FAILSAVE_)
 
-    if (!this->transp && i>=this->k)  NoSuchIndex("SetCoeff",i);
-    if (!this->transp && j>=this->l)  NoSuchIndex("SetCoeff",j);
-    if (this->transp && i>=this->l)   NoSuchIndex("SetCoeff",i);
-    if (this->transp && j>=this->k)   NoSuchIndex("SetCoeff",j);
+    if (!this->transp && i>=this->k)  this->NoSuchIndex("SetCoeff",i);
+    if (!this->transp && j>=this->l)  this->NoSuchIndex("SetCoeff",j);
+    if (this->transp && i>=this->l)   this->NoSuchIndex("SetCoeff",i);
+    if (this->transp && j>=this->k)   this->NoSuchIndex("SetCoeff",j);
 
     if (a>=InfFloat || a<=-InfFloat)
         this->Error(ERR_RANGE,"SetCoeff","Finite matrix coefficients required");

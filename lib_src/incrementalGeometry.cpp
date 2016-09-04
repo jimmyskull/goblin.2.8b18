@@ -72,7 +72,7 @@ void incrementalGeometry::Init(TArc v) throw(ERRange)
 {
     #if defined(_FAILSAVE_)
 
-    if (v>=l) NoSuchItem("Init",v);
+    if (v>=l) this->NoSuchItem("Init",v);
 
     #endif
 
@@ -100,8 +100,8 @@ void incrementalGeometry::InsertColumnLeftOf(TArc u,TArc v)
 {
     #if defined(_FAILSAVE_)
 
-    if (u>=l) NoSuchItem("InsertColumnLeftOf",u);
-    if (v>=l) NoSuchItem("InsertColumnLeftOf",v);
+    if (u>=l) this->NoSuchItem("InsertColumnLeftOf",u);
+    if (v>=l) this->NoSuchItem("InsertColumnLeftOf",v);
 
     if (freeID==0)
         Error(ERR_REJECTED,"InsertColumnLeftOf","Geometry is not initialized");
@@ -135,8 +135,8 @@ void incrementalGeometry::InsertColumnRightOf(TArc u,TArc v)
 {
     #if defined(_FAILSAVE_)
 
-    if (u>=l) NoSuchItem("InsertColumnRightOf",u);
-    if (v>=l) NoSuchItem("InsertColumnRightOf",v);
+    if (u>=l) this->NoSuchItem("InsertColumnRightOf",u);
+    if (v>=l) this->NoSuchItem("InsertColumnRightOf",v);
 
     if (freeID==0)
         Error(ERR_REJECTED,"InsertColumnRightOf","Geometry is not initialized");
@@ -170,8 +170,8 @@ void incrementalGeometry::InsertRowAtopOf(TArc u,TArc v)
 {
     #if defined(_FAILSAVE_)
 
-    if (u>=l) NoSuchItem("InsertRowAtopOf",u);
-    if (v>=l) NoSuchItem("InsertRowAtopOf",v);
+    if (u>=l) this->NoSuchItem("InsertRowAtopOf",u);
+    if (v>=l) this->NoSuchItem("InsertRowAtopOf",v);
 
     if (freeID==0)
         Error(ERR_REJECTED,"InsertRowAtopOf","Geometry is not initialized");
@@ -205,8 +205,8 @@ void incrementalGeometry::InsertRowBelowOf(TArc u,TArc v)
 {
     #if defined(_FAILSAVE_)
 
-    if (u>=l) NoSuchItem("InsertRowBelowOf",u);
-    if (v>=l) NoSuchItem("InsertRowBelowOf",v);
+    if (u>=l) this->NoSuchItem("InsertRowBelowOf",u);
+    if (v>=l) this->NoSuchItem("InsertRowBelowOf",v);
 
     if (freeID==0)
         Error(ERR_REJECTED,"InsertRowBelowOf","Geometry is not initialized");
@@ -241,9 +241,9 @@ void incrementalGeometry::ShareRowWith(TArc u,TArc v)
     #if defined(_FAILSAVE_)
 
     if (u>=l)
-        NoSuchItem("ShareRowWith",u);
+        this->NoSuchItem("ShareRowWith",u);
     if (v>=l)
-        NoSuchItem("ShareRowWith",v);
+        this->NoSuchItem("ShareRowWith",v);
 
     if (rowID[u]==NoArc)
         Error(ERR_REJECTED,"ShareRowWith","Missing row assignment");
@@ -262,8 +262,8 @@ void incrementalGeometry::ShareColumnWith(TArc u,TArc v)
 {
     #if defined(_FAILSAVE_)
 
-    if (u>=l) NoSuchItem("ShareColumnWith",u);
-    if (v>=l) NoSuchItem("ShareColumnWith",v);
+    if (u>=l) this->NoSuchItem("ShareColumnWith",u);
+    if (v>=l) this->NoSuchItem("ShareColumnWith",v);
 
     if (colID[u]==NoArc)
         Error(ERR_REJECTED,"ShareColumnWith","Missing column assignment");
@@ -305,7 +305,7 @@ TArc incrementalGeometry::RowNumber(TArc u) throw(ERRange,ERRejected)
 {
     #if defined(_FAILSAVE_)
 
-    if (u>=l) NoSuchItem("RowNumber",u);
+    if (u>=l) this->NoSuchItem("RowNumber",u);
 
     if (rowID[u]==NoArc)
         Error(ERR_REJECTED,"RowNumber","Missing row assignment");
@@ -322,7 +322,7 @@ TArc incrementalGeometry::ColumnNumber(TArc u) throw(ERRange,ERRejected)
 {
     #if defined(_FAILSAVE_)
 
-    if (u>=l) NoSuchItem("ColumnNumber",u);
+    if (u>=l) this->NoSuchItem("ColumnNumber",u);
 
     if (colID[u]==NoArc)
         Error(ERR_REJECTED,"ColumnNumber","Missing column assignment");

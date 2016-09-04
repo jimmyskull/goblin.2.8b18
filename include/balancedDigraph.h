@@ -42,7 +42,7 @@ public:
     balancedFNW(const char* fileName,goblinController& _CT=goblinDefaultContext)
         throw(ERFile,ERParse);
 
-    ~balancedFNW() throw();
+    virtual ~balancedFNW() throw();
 
     unsigned long   Size() const throw();
     unsigned long   Allocated() const throw();
@@ -70,6 +70,8 @@ class splitGraph : public balancedFNW
 public:
 
     splitGraph(const abstractDiGraph &G,TNode s,TNode t) throw();
+
+    virtual ~splitGraph() throw() {}
 
     TNode Source() const throw() {return n-1;};
     TNode Target() const throw() {return n-2;};

@@ -30,6 +30,8 @@ class abstractSubgraph : public virtual managedObject
 {
 
 public:
+    virtual ~abstractSubgraph() throw() {}
+    
     //New methods in this class
     /*! \brief getSourceGraph returns a reference to the original %graph.
      *

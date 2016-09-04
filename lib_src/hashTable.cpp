@@ -152,7 +152,7 @@ TKey goblinHashTable<TItem,TKey>::Key(TItem w) throw(ERRange)
 {
     #if defined(_FAILSAVE_)
 
-    if (w>=range) NoSuchItem("Key",w);
+    if (w>=range) this->NoSuchItem("Key",w);
 
     #endif
 
@@ -183,7 +183,7 @@ void goblinHashTable<TItem,TKey>::ChangeKey(TItem w,TKey alpha)
 {
     #if defined(_FAILSAVE_)
 
-    if (w>=range) NoSuchItem("ChangeKey",w);
+    if (w>=range) this->NoSuchItem("ChangeKey",w);
 
     #endif
 

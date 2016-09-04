@@ -48,7 +48,7 @@ public:
     ///
     /// \param G  The original digraph object
     denseDiGraph(abstractDiGraph& G) throw();
-    ~denseDiGraph() throw();
+    virtual ~denseDiGraph() throw();
 
     void            ReadNNodes(goblinImport& F) throw(ERParse);
 
@@ -94,6 +94,7 @@ public:
 
     distanceGraph(abstractMixedGraph &G) throw(ERRejected);
 
+    virtual ~distanceGraph() throw() {}
 };
 
 /// @}

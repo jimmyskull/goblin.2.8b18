@@ -200,7 +200,7 @@ void nestedFamily<TItem>::Bud(TItem v) throw(ERRange,ERRejected)
 {
     #if defined(_FAILSAVE_)
 
-    if (v>=n) NoSuchItem("Bud",v);
+    if (v>=n) this->NoSuchItem("Bud",v);
 
     if (B[v]!=UNDEFINED)
     {
@@ -396,7 +396,7 @@ bool nestedFamily<TItem>::Top(TItem v) const throw(ERRange)
 {
     #if defined(_FAILSAVE_)
 
-    if (v>=n+m) NoSuchItem("Top",v);
+    if (v>=n+m) this->NoSuchItem("Top",v);
 
     #endif
 
@@ -424,7 +424,7 @@ TItem nestedFamily<TItem>::Find(TItem v) const throw(ERRange)
 {
     #if defined(_FAILSAVE_)
 
-    if (v>=n+m) NoSuchItem("Find",v);
+    if (v>=n+m) this->NoSuchItem("Find",v);
 
     #endif
 
@@ -469,7 +469,7 @@ TItem nestedFamily<TItem>::Set(TItem v) const throw(ERRange)
 {
     #if defined(_FAILSAVE_)
 
-    if (v>=n+m) NoSuchItem("Set",v);
+    if (v>=n+m) this->NoSuchItem("Set",v);
 
     #endif
 
@@ -544,7 +544,7 @@ TItem nestedFamily<TItem>::Next(TItem v) const throw(ERRange,ERRejected)
 {
     #if defined(_FAILSAVE_)
 
-    if (v>=n+m) NoSuchItem("Next",v);
+    if (v>=n+m) this->NoSuchItem("Next",v);
 
     if (B[v]==UNDEFINED)
     {
@@ -575,7 +575,7 @@ void nestedFamily<TItem>::Adjust(TItem s,TItem b) const throw(ERRange)
         Error(ERR_RANGE,"Adjust",this->CT.logBuffer);
     }
 
-    if (b>=n+m) NoSuchItem("Adjust",b);
+    if (b>=n+m) this->NoSuchItem("Adjust",b);
 
     #endif
 
@@ -684,7 +684,7 @@ void nestedFamily<TItem>::Block(TItem v) const throw(ERRange,ERRejected)
 {
     #if defined(_FAILSAVE_)
 
-    if (v>=n+m) NoSuchItem("Block",v);
+    if (v>=n+m) this->NoSuchItem("Block",v);
 
     if (B[v]==UNDEFINED)
     {
@@ -736,7 +736,7 @@ void nestedFamily<TItem>::UnBlock(TItem v) const throw(ERRange,ERRejected)
 {
     #if defined(_FAILSAVE_)
 
-    if (v>=n+m) NoSuchItem("Block",v);
+    if (v>=n+m) this->NoSuchItem("Block",v);
 
     if (B[v]==UNDEFINED)
     {

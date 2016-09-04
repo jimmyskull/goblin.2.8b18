@@ -47,7 +47,7 @@ public:
     /// \param options  A combination of OPT_CLONE, OPT_PARALLELS, OPT_MAPPINGS and OPT_SUB
     biGraph(abstractBiGraph& G,TOption options=0) throw();
 
-    ~biGraph() throw();
+    virtual ~biGraph() throw();
 
     unsigned long   Size() const throw();
     unsigned long   Allocated() const throw();
@@ -81,6 +81,8 @@ public:
 
     inducedBigraph(abstractMixedGraph&,const indexSet<TNode>&,
         const indexSet<TNode>&,const TOption = OPT_PARALLELS) throw(ERRejected);
+
+    virtual ~inducedBigraph() throw() {}
 
 };
 

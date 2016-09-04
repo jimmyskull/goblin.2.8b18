@@ -50,7 +50,7 @@ public:
     /// \param G  The original graph object
     denseGraph(abstractGraph& G) throw();
 
-    ~denseGraph() throw();
+    virtual ~denseGraph() throw();
 
     void            ReadNNodes(goblinImport& F) throw(ERParse);
 
@@ -97,6 +97,7 @@ public:
 
     metricGraph(abstractGraph &G) throw(ERRejected);
 
+    virtual ~metricGraph() throw() {}
 };
 
 /// @}

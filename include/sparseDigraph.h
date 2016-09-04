@@ -54,7 +54,7 @@ public:
     /// \param options  A combination of OPT_CLONE, OPT_PARALLELS, OPT_MAPPINGS and OPT_SUB
     diGraph(abstractMixedGraph& G,TOption options=0) throw();
 
-    ~diGraph() throw();
+    virtual ~diGraph() throw();
 
     unsigned long   Size() const throw();
     unsigned long   Allocated() const throw();
@@ -118,6 +118,7 @@ public:
 
     inducedOrientation(abstractMixedGraph &G,TOption options = 0) throw(ERRejected);
 
+    virtual ~inducedOrientation() throw() {}
 };
 
 
@@ -143,6 +144,8 @@ public:
     /// \param options  Ignore the orientations of directed arcs
     nodeSplitting(abstractMixedGraph& _G,TOption options=0) throw();
 
+    virtual ~nodeSplitting() throw() {}
+
     void MapEdgeCut() throw();
 
 };
@@ -157,6 +160,7 @@ public:
     regularTree(TNode _depth,TNode deg,TNode _n = NoNode,
         goblinController& thisContext = goblinDefaultContext) throw(ERRejected);
 
+    virtual ~regularTree() throw() {}
 };
 
 /// @}
@@ -181,6 +185,7 @@ public:
 
     directedDual(abstractMixedGraph &G,TOption options = 0) throw(ERRejected);
 
+    virtual ~directedDual() throw() {}
 };
 
 /// @}
@@ -200,6 +205,7 @@ public:
 
     transitiveClosure(abstractDiGraph &G,TOption options = 0) throw(ERRejected);
 
+    virtual ~transitiveClosure() throw() {}
 };
 
 
@@ -214,6 +220,7 @@ public:
 
     intransitiveReduction(abstractDiGraph &G,TOption options = 0) throw(ERRejected);
 
+    virtual ~intransitiveReduction() throw() {}
 };
 
 /// @}

@@ -49,7 +49,7 @@ public:
 
     branchNode(TIndex nn,goblinController& thisContext,
             branchScheme<TIndex,TObj>* = NULL) throw();
-    ~branchNode() throw();
+    virtual ~branchNode() throw();
 
     unsigned long   Allocated() const throw();
 
@@ -137,6 +137,8 @@ public:
 
     branchTree(goblinController &) throw();
 
+    virtual ~branchTree() throw() {}
+
     void    ConfigDisplay(goblinController &) const throw();
 
 };
@@ -197,7 +199,7 @@ public:
     TObj    bestBound;
 
     branchScheme(branchNode<TIndex,TObj>*,TObj,TSearchLevel = SEARCH_EXHAUSTIVE) throw();
-    ~branchScheme() throw();
+    virtual ~branchScheme() throw();
 
     /// \brief  The currently applied search strategy
     enum TSearchState {

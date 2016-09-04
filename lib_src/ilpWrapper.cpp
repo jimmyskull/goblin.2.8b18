@@ -208,7 +208,7 @@ void goblinILPWrapper::WriteLPNaive(const char* fileName,TDisplayOpt opt)
 
 
 
-    if (!opt || (opt & DISPLAY_OBJECTIVE) && ObjectSense()!=NO_OBJECTIVE)
+    if (!opt || ((opt & DISPLAY_OBJECTIVE) && ObjectSense()!=NO_OBJECTIVE))
     {
         if (ObjectSense()==MAXIMIZE)
             expFile << "Maximize" << endl;

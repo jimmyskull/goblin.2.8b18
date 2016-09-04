@@ -43,7 +43,7 @@ private:
 public:
 
     goblinImport(const char*,goblinController& = goblinDefaultContext) throw(ERFile);
-    ~goblinImport() throw(ERParse);
+    virtual ~goblinImport() throw(ERParse);
 
     char*           Display() const throw() {return NULL;};
     const char*     Label() const throw() {return NULL;};

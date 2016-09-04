@@ -276,8 +276,8 @@ inline void managedObject::ExportToAscii(const char* fileName,TOption format) co
 }
 
 
-#define InternalError(scope,event) {sprintf(this->CT.logBuffer,"%s (%s, line: %d)",event,__FILE__,__LINE__); Error(ERR_INTERNAL,scope,this->CT.logBuffer);}
-#define InternalError1(scope) {sprintf(this->CT.logBuffer,"%s (%s, line: %d)",this->CT.logBuffer,__FILE__,__LINE__); Error(ERR_INTERNAL,scope,this->CT.logBuffer);}
+#define InternalError(scope,event) {sprintf(this->CT.logBuffer,"%s (%s, line: %d)",event,__FILE__,__LINE__); this->Error(ERR_INTERNAL,scope,this->CT.logBuffer);}
+#define InternalError1(scope) {sprintf(this->CT.logBuffer,"%s (%s, line: %d)",this->CT.logBuffer,__FILE__,__LINE__); this->Error(ERR_INTERNAL,scope,this->CT.logBuffer);}
 
 
 #endif

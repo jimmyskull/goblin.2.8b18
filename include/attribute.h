@@ -209,8 +209,6 @@ attribute<T>::attribute(const attribute<T> &dupAttr) throw() :
 template<typename T> inline
 size_t attribute<T>::Size() const throw()
 {
-    if (&data==NULL) return 0;
-
     return data.size();
 }
 

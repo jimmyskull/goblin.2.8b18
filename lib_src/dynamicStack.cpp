@@ -97,7 +97,7 @@ void dynamicStack<TItem,TKey>::Insert(TItem w,TKey alpha) throw(ERRange)
 {
     #if defined(_FAILSAVE_)
 
-    if (w>=n) NoSuchItem("Insert",w);
+    if (w>=n) this->NoSuchItem("Insert",w);
 
     #endif
 

@@ -24,6 +24,7 @@
 class investigator : public virtual managedObject
 {
 public:
+    virtual ~investigator() throw() {}
 
     virtual unsigned long Size() const throw() = 0;
 

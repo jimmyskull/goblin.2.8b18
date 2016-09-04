@@ -192,7 +192,7 @@ void fibonacciHeap<TItem,TKey>::Display(TItem v) const throw(ERRange)
 {
     #if defined(_FAILSAVE_)
 
-    if (v>=n || status[v]==NOT_QUEUED) NoSuchItem("Display",v);
+    if (v>=n || status[v]==NOT_QUEUED) this->NoSuchItem("Display",v);
 
     #endif
 
@@ -263,7 +263,7 @@ bool fibonacciHeap<TItem,TKey>::IsMember(TItem w)
 {
     #if defined(_FAILSAVE_)
 
-    if (w>=n) NoSuchItem("Insert",w);
+    if (w>=n) this->NoSuchItem("Insert",w);
 
     #endif
 
@@ -277,12 +277,12 @@ void fibonacciHeap<TItem,TKey>::Insert(TItem w,TKey alpha)
 {
     #if defined(_FAILSAVE_)
 
-    if (w>=n) NoSuchItem("Insert",w);
+    if (w>=n) this->NoSuchItem("Insert",w);
 
     if (status[w]!=NOT_QUEUED)
     {
         sprintf(this->CT.logBuffer,"Already on queue: %ld",w);
-        Error(ERR_REJECTED,"Insert",this->CT.logBuffer);
+        this->Error(ERR_REJECTED,"Insert",this->CT.logBuffer);
     }
 
     #endif
@@ -327,7 +327,7 @@ void fibonacciHeap<TItem,TKey>::Push(TItem w) throw(ERRejected)
     if (w>=n || status[w]!=ROOT_NODE)
     {
         sprintf(this->CT.logBuffer,"Not a root: %ld",w);
-        this -> Error(ERR_REJECTED,"Push",this->CT.logBuffer);
+        this->Error(ERR_REJECTED,"Push",this->CT.logBuffer);
     }
 
     #endif
@@ -388,20 +388,20 @@ void fibonacciHeap<TItem,TKey>::Link(TItem v,TItem w) throw(ERRange,ERRejected)
 {
     #if defined(_FAILSAVE_)
 
-    if (v>=n) NoSuchItem("Link",v);
+    if (v>=n) this->NoSuchItem("Link",v);
 
     if (status[v]!=ROOT_NODE)
     {
         sprintf(this->CT.logBuffer,"Not a root: %ld",v);
-        this -> Error(ERR_REJECTED,"Link",this->CT.logBuffer);
+        this->Error(ERR_REJECTED,"Link",this->CT.logBuffer);
     }
 
-    if (w>=n) NoSuchItem("Link",w);
+    if (w>=n) this->NoSuchItem("Link",w);
 
     if (status[w]!=ROOT_NODE)
     {
         sprintf(this->CT.logBuffer,"Not a root: %ld",w);
-        this -> Error(ERR_REJECTED,"Link",this->CT.logBuffer);
+        this->Error(ERR_REJECTED,"Link",this->CT.logBuffer);
     }
 
     #endif
@@ -451,12 +451,12 @@ void fibonacciHeap<TItem,TKey>::Cut(TItem v) throw(ERRange,ERRejected)
 {
     #if defined(_FAILSAVE_)
 
-    if (v>=n) NoSuchItem("Cut",v);
+    if (v>=n) this->NoSuchItem("Cut",v);
 
     if (status[v]!=UNMARKED_CHILD && status[v]!=MARKED_CHILD)
     {
         sprintf(this->CT.logBuffer,"Cut node is a root: %ld",v);
-        this -> Error(ERR_REJECTED,"Cut",this->CT.logBuffer);
+        this->Error(ERR_REJECTED,"Cut",this->CT.logBuffer);
     }
 
     #endif
@@ -505,7 +505,7 @@ void fibonacciHeap<TItem,TKey>::Delete(TItem w) throw(ERRange)
 {
     #if defined(_FAILSAVE_)
 
-    if (w>=n || status[w]==NOT_QUEUED) NoSuchItem("Delete",w);
+    if (w>=n || status[w]==NOT_QUEUED) this->NoSuchItem("Delete",w);
 
     #endif
 
@@ -549,7 +549,7 @@ TItem fibonacciHeap<TItem,TKey>::Delete() throw(ERRejected)
 {
     #if defined(_FAILSAVE_)
 
-    if (card==0) this -> Error(ERR_REJECTED,"Delete","Heap is empty");
+    if (card==0) this->Error(ERR_REJECTED,"Delete","Heap is empty");
 
     #endif
 
@@ -577,7 +577,7 @@ TKey fibonacciHeap<TItem,TKey>::Key(TItem w) const throw(ERRange)
 {
     #if defined(_FAILSAVE_)
 
-    if (w>=n || status[w]==NOT_QUEUED) NoSuchItem("Key",w);
+    if (w>=n || status[w]==NOT_QUEUED) this->NoSuchItem("Key",w);
 
     #endif
 
@@ -590,7 +590,7 @@ void fibonacciHeap<TItem,TKey>::ChangeKey(TItem w,TKey alpha) throw(ERRange)
 {
     #if defined(_FAILSAVE_)
 
-    if (w>=n || status[w]==NOT_QUEUED) NoSuchItem("ChangeKey",w);
+    if (w>=n || status[w]==NOT_QUEUED) this->NoSuchItem("ChangeKey",w);
 
     #endif
 
@@ -644,7 +644,7 @@ TItem fibonacciHeap<TItem,TKey>::Peek() const throw(ERRejected)
 {
     #if defined(_FAILSAVE_)
 
-    if (card==0) this -> Error(ERR_REJECTED,"PEEK","Heap is empty");
+    if (card==0) this->Error(ERR_REJECTED,"PEEK","Heap is empty");
 
     #endif
 

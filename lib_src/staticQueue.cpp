@@ -142,7 +142,7 @@ void staticQueue<TItem,TKey>::Insert(TItem w,TKey alpha,TOptInsert mode) throw(E
 {
     #if defined(_FAILSAVE_)
 
-    if (w>=n) NoSuchItem("Insert",w);
+    if (w>=n) this->NoSuchItem("Insert",w);
 
     #endif
 
@@ -204,7 +204,7 @@ bool staticQueue<TItem,TKey>::IsMember(TItem i) const throw(ERRange)
 {
     #if defined(_FAILSAVE_)
 
-    if (i>=n) NoSuchItem("IsMember",i);
+    if (i>=n) this->NoSuchItem("IsMember",i);
 
     #endif
 
@@ -228,7 +228,7 @@ TItem staticQueue<TItem,TKey>::Successor(TItem i) const throw(ERRange)
 {
     #if defined(_FAILSAVE_)
 
-    if (i>=n) NoSuchItem("Successor",i);
+    if (i>=n) this->NoSuchItem("Successor",i);
 
     #endif
 

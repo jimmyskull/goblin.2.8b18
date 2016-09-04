@@ -140,7 +140,7 @@ void disjointFamily<TItem>::Bud(TItem v) throw(ERRange)
 {
     #if defined(_FAILSAVE_)
 
-    if (this->CT.logWarn && v>=n) NoSuchItem("Find",v);
+    if (this->CT.logWarn && v>=n) this->NoSuchItem("Find",v);
 
     #endif
 
@@ -154,9 +154,9 @@ void disjointFamily<TItem>::Merge(TItem u,TItem v) throw(ERRange)
 {
     #if defined(_FAILSAVE_)
 
-    if (u>=n || B[u]==UNDEFINED) NoSuchItem("Find",u);
+    if (u>=n || B[u]==UNDEFINED) this->NoSuchItem("Find",u);
 
-    if (v>=n || B[v]==UNDEFINED) NoSuchItem("Find",v);
+    if (v>=n || B[v]==UNDEFINED) this->NoSuchItem("Find",v);
 
     #endif
 
@@ -191,7 +191,7 @@ TItem disjointFamily<TItem>::Find(TItem v) const throw(ERRange)
 {
     #if defined(_FAILSAVE_)
 
-    if (this->CT.logWarn && (v>=n || B[v]==UNDEFINED)) NoSuchItem("Find",v);
+    if (this->CT.logWarn && (v>=n || B[v]==UNDEFINED)) this->NoSuchItem("Find",v);
 
     #endif
 

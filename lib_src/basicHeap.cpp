@@ -139,7 +139,7 @@ void basicHeap<TItem,TKey>::Insert(TItem w,TKey alpha) throw(ERRange,ERRejected)
 {
     #if defined(_FAILSAVE_)
 
-    if (w>=n) NoSuchItem("Insert",w);
+    if (w>=n) this->NoSuchItem("Insert",w);
 
     if (maxIndex>=n)
         this -> Error(ERR_REJECTED,"Insert","Buffer is full");
@@ -186,7 +186,7 @@ void basicHeap<TItem,TKey>::Delete(TItem w) throw(ERRange,ERRejected)
 {
     #if defined(_FAILSAVE_)
 
-    if (w>=n) NoSuchItem("Delete",w);
+    if (w>=n) this->NoSuchItem("Delete",w);
 
     #endif
 
@@ -197,7 +197,7 @@ void basicHeap<TItem,TKey>::Delete(TItem w) throw(ERRange,ERRejected)
     if (alpha==InfFloat)
     {
         sprintf(this->CT.logBuffer,"Not a member: %ld",w);
-        Error(ERR_REJECTED,"Delete",this->CT.logBuffer);
+        this->Error(ERR_REJECTED,"Delete",this->CT.logBuffer);
     }
 
     #endif
@@ -242,7 +242,7 @@ TKey basicHeap<TItem,TKey>::Key(TItem w) const throw(ERRange)
 {
     #if defined(_FAILSAVE_)
 
-    if (w>=n) NoSuchItem("Key",w);
+    if (w>=n) this->NoSuchItem("Key",w);
 
     #endif
 
@@ -255,12 +255,12 @@ void basicHeap<TItem,TKey>::ChangeKey(TItem w,TKey alpha) throw(ERRange,ERReject
 {
     #if defined(_FAILSAVE_)
 
-    if (w>=n) NoSuchItem("ChangeKey",w);
+    if (w>=n) this->NoSuchItem("ChangeKey",w);
 
     if (key[w]==InfFloat)
     {
         sprintf(this->CT.logBuffer,"Not a member: %ld",w);
-        Error(ERR_REJECTED,"ChangeKey",this->CT.logBuffer);
+        this->Error(ERR_REJECTED,"ChangeKey",this->CT.logBuffer);
     }
 
     #endif

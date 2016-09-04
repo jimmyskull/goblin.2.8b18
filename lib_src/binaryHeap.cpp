@@ -142,7 +142,7 @@ void binaryHeap<TItem,TKey>::Display(TItem i) const throw(ERRange)
 {
     #if defined(_FAILSAVE_)
 
-    if (i>maxIndex || i==0) NoSuchIndex("Display",i);
+    if (i>maxIndex || i==0) this->NoSuchIndex("Display",i);
 
     if (i!=index[v[i]])
     {
@@ -200,7 +200,7 @@ void binaryHeap<TItem,TKey>::UpHeap(TItem i) throw(ERRange)
 {
     #if defined(_FAILSAVE_)
 
-    if (i>maxIndex || i==0) NoSuchIndex("UpHeap",i);
+    if (i>maxIndex || i==0) this->NoSuchIndex("UpHeap",i);
 
     #endif
 
@@ -225,7 +225,7 @@ void binaryHeap<TItem,TKey>::DownHeap(TItem i) throw(ERRange)
 {
     #if defined(_FAILSAVE_)
 
-    if (i>maxIndex || i==0) NoSuchIndex("DownHeap",i);
+    if (i>maxIndex || i==0) this->NoSuchIndex("DownHeap",i);
 
     #endif
 
@@ -261,7 +261,7 @@ void binaryHeap<TItem,TKey>::Insert(TItem w,TKey alpha) throw(ERRange,ERRejected
 {
     #if defined(_FAILSAVE_)
 
-    if (w>=n) NoSuchIndex("Insert",w);
+    if (w>=n) this->NoSuchIndex("Insert",w);
 
     if (maxIndex>=n) this -> Error(ERR_REJECTED,"Insert","Heap overflow");
 
@@ -298,7 +298,7 @@ void binaryHeap<TItem,TKey>::Delete(TItem w) throw(ERRange)
 {
     #if defined(_FAILSAVE_)
 
-    if (w>=n || index[w]==UITEM_MAX()) NoSuchItem("Delete",w);
+    if (w>=n || index[w]==UITEM_MAX()) this->NoSuchItem("Delete",w);
 
     #endif
 
@@ -380,7 +380,7 @@ TKey binaryHeap<TItem,TKey>::Key(TItem w) const throw(ERRange)
 {
     #if defined(_FAILSAVE_)
 
-    if (w>=n || index[w]==UITEM_MAX()) NoSuchItem("Key",w);
+    if (w>=n || index[w]==UITEM_MAX()) this->NoSuchItem("Key",w);
 
     #endif
 
@@ -393,7 +393,7 @@ void binaryHeap<TItem,TKey>::ChangeKey(TItem w,TKey alpha) throw(ERRange)
 {
     #if defined(_FAILSAVE_)
 
-    if (w>=n || index[w]==UITEM_MAX()) NoSuchItem("ChangeKey",w);
+    if (w>=n || index[w]==UITEM_MAX()) this->NoSuchItem("ChangeKey",w);
 
     #endif
 

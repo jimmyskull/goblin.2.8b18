@@ -45,7 +45,7 @@ protected:
 public:
 
     goblinRootObject() : OH(THandle(0)) {goblinNObjects++;};
-    virtual ~goblinRootObject() {goblinNObjects--;};
+    virtual ~goblinRootObject() throw(ERParse) {goblinNObjects--;};
 
     virtual char*  Display() const throw(ERFile,ERRejected) = 0;
     virtual const char*  Label() const throw() = 0;
